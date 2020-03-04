@@ -312,7 +312,9 @@ public abstract class Text {
          * @param players The players to send the message to
          */
         public final void sendTo(Player... players) {
-        
+            for (Player player : players) {
+                sendTo(this, player);
+            }
         }
         
         /**
