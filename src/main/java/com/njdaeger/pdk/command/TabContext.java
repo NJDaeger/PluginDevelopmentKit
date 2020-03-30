@@ -1,9 +1,10 @@
 package com.njdaeger.pdk.command;
 
-public class TabContext {
+import org.bukkit.command.CommandSender;
+
+public class TabContext extends CommandContext {
     
-    public TabContext() {
-    
+    public TabContext(PDKCommand command, CommandSender sender, String alias, String[] args) {
+        super(command, sender, alias, args);
     }
-    
 }

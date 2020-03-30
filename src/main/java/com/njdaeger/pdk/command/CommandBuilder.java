@@ -1,23 +1,14 @@
 package com.njdaeger.pdk.command;
 
-import com.njdaeger.pdk.command.flags.Flag;
+import com.njdaeger.pdk.command.flag.Flag;
 import org.apache.commons.lang.Validate;
+import org.bukkit.plugin.Plugin;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class CommandBuilder {
     
-    private final String name;
-    private final String[] aliases;
-    private final List<Class<? extends Flag<?>>> flags;
-    
-    private String usage;
-    private String description;
-    private TabExecutor tabExecutor;
-    private CommandExecutor executor;
+    private final PDKCommand command;
     
     public static CommandBuilder of(String... aliases) {
         Validate.notEmpty(aliases, "You must provide a name for your command.");
@@ -30,30 +21,56 @@ public class CommandBuilder {
     }
     
     private CommandBuilder(String[] aliases) {
-        this.name = aliases[0];
-        this.flags = new ArrayList<>();
-        this.aliases = aliases.length > 1 ? Arrays.copyOfRange(aliases, 1, aliases.length) : new String[0];
+        command = new PDKCommand(aliases);
     }
     
     public CommandBuilder usage(String usage) {
-    
+        command.setUsage(usage);
+        return this;
     }
     
     public CommandBuilder description(String description) {
-    
+        command.setDescription(description);
+        return this;
     }
     
     public CommandBuilder executor(CommandExecutor executor) {
-    
+        command.setCommandExecutor(executor);
+        return this;
     }
     
     public CommandBuilder completer(TabExecutor executor) {
-    
-    }
-    
-    public <V, T extends Flag<V>> CommandBuilder flag(Class<T> flag) {
-        flags.add(flag);
+        command.setTabExecutor(executor);
         return this;
     }
+    
+    public <V, T extends Flag<V>> CommandBuilder flag(T flag) {
+        command.addFlag(flag);
+        return this;
+    }
+    
+    public CommandBuilder permissions(String... permissions) {
+        command.setPermissions(permissions);
+        return this;
+    }
+
+    public CommandBuilder min(int min) {
+        command.setMinArgs(min);
+        return this;
+    }
+
+    public CommandBuilder max(int max) {
+        command.setMaxArgs(max);
+        return this;
+    }
+
+    public PDKCommand build() {
+        return command;
+    }
+    
+    public void register(Plugin plugin) {
+        command.register(plugin);
+    }
+    
     
 }
