@@ -18,6 +18,7 @@ import static com.njdaeger.pdk.utils.Util.getNMSClass;
 /**
  * A text component
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Text {
     
     /**
@@ -26,7 +27,7 @@ public abstract class Text {
      * @return The newly created text section
      */
     public static TextSection of(String text) {
-        return new TextSection(true, null);
+        return new TextSection(true, null).setText(text);
     }
     
     /**
