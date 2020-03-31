@@ -2,6 +2,7 @@ package com.njdaeger.pdk.command.flag;
 
 import com.njdaeger.pdk.command.CommandContext;
 import com.njdaeger.pdk.command.TabExecutor;
+import com.njdaeger.pdk.command.exception.PDKCommandException;
 
 public abstract class Flag<T> implements TabExecutor {
 
@@ -76,7 +77,7 @@ public abstract class Flag<T> implements TabExecutor {
      * @param argument The argument which was after the given flag. Or null if the flag didnt have an argument
      * @return The parsed value to be passed to the command context for the final execution run
      */
-    public abstract T parse(CommandContext context, String argument);
+    public abstract T parse(CommandContext context, String argument) throws PDKCommandException;
 
     /**
      * The aliases for this flag
@@ -133,4 +134,9 @@ public abstract class Flag<T> implements TabExecutor {
     public String getUsage() {
         return usage;
     }
+
+    public String getRawFlag() {
+        return hasSplitter() ? getIndicator() + getSplitter() : "-" + getIndicator();
+    }
+
 }

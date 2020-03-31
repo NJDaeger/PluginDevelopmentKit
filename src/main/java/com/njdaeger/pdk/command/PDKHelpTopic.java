@@ -5,6 +5,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.help.HelpTopic;
 
+import static org.bukkit.ChatColor.*;
+
 public class PDKHelpTopic extends HelpTopic {
     
     private final PDKCommand command;
@@ -23,13 +25,15 @@ public class PDKHelpTopic extends HelpTopic {
     @Override
     public String getFullText(CommandSender forWho) {
         StringBuilder builder = new StringBuilder();
-        builder.append(command.getDescription()).append("\n");
-        builder.append(command.getUsage()).append("\n");
+        builder.append(DARK_AQUA).append(BOLD).append("Description: ")
+                .append(GRAY).append(command.getDescription()).append("\n")
+                .append(DARK_AQUA).append(BOLD).append("Usage: ")
+                .append(GRAY).append(command.getUsage()).append("\n");
         if (!command.getFlags().isEmpty()) {
-            builder.append("Flags:\n");
+            builder.append(DARK_AQUA).append(BOLD).append("Flags:\n");
             for (Flag<?> flag : command.getFlags()) {
-                builder.append(" ").append(flag.getUsage()).append("\n");
-                builder.append("    ").append(flag.getDescription()).append("\n");
+                builder.append(GRAY).append(flag.getUsage())
+                        .append(ITALIC).append(" ").append(flag.getDescription()).append("\n");
             }
         }
         return builder.toString();
@@ -37,12 +41,12 @@ public class PDKHelpTopic extends HelpTopic {
     
     @Override
     public String getShortText() {
-        return command.getUsage();
+        return command.getDescription();
     }
     
     @Override
     public String getName() {
-        return command.getName();
+        return "/" + command.getName();
     }
     
     private boolean hasAnyPermission(CommandSender sender, String[] permissions) {

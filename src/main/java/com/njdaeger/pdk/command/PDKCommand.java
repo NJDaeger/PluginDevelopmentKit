@@ -237,6 +237,7 @@ public class PDKCommand {
 
     /**
      * Checks to see if the command passes the minimum argument check
+     *
      * @param context The command context
      * @throws PDKCommandException If there arent enough arguments supplied to run this command
      */
@@ -246,6 +247,7 @@ public class PDKCommand {
 
     /**
      * Checks to see if the command passes the maximum argument check
+     *
      * @param context The command context
      * @throws PDKCommandException If there are too many arguments supplied to run this command
      */
@@ -255,6 +257,7 @@ public class PDKCommand {
 
     /**
      * Checks to see if the sender has permission to run this command
+     *
      * @param context The command context
      * @throws PDKCommandException If the sender does not have permission to run this command
      */
@@ -266,12 +269,12 @@ public class PDKCommand {
         try {
             permissionCheck(context);
 
-            if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context);
+            if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context, false);
 
             minimumCheck(context);
             maximumCheck(context);
 
-            commandExecutor.execute(context);
+            if (commandExecutor != null) commandExecutor.execute(context);
         } catch (PDKCommandException e) {
             e.showError(context.getSender());
         }
@@ -279,7 +282,55 @@ public class PDKCommand {
 
     public List<String> complete(TabContext context) {
         try {
+            //if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context, true);
 
+            if (context.getCurrent() == null) return computePossible(context.currentPossibleCompletions(), context, false);
+            boolean completingFlags = false;
+            for (Flag<?> flag : flags.values()) {
+                //if (context.hasFlag(flag.getIndicator())) continue;
+                if (flag.hasArgument()) {
+                    if (flag.hasSplitter()) {
+                        if (context.getCurrent().startsWith(flag.getRawFlag()) || context.isPrevious(flag.getRawFlag())) {
+                            flag.complete(context);
+                            completingFlags = true;
+                        }
+                    } else {
+                        if (context.isPrevious(flag.getRawFlag())) {
+                            flag.complete(context);
+                            completingFlags = true;
+                        }
+                    }
+                }
+            }
+            if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context, true);
+            if (tabExecutor != null && !completingFlags) tabExecutor.complete(context);
+            return computePossible(context.currentPossibleCompletions(), context, completingFlags);
+
+        } catch (PDKCommandException e) {
+            e.showError(context.getSender());
         }
+        return computePossible(context.currentPossibleCompletions(), context, false);
     }
+
+    private List<String> computePossible(List<String> currentPossible, TabContext context, boolean completingFlags) {
+        if (hasFlags() && !completingFlags) {
+            for (String flag : flags.keySet()) {
+                if (!context.hasFlag(flag)) currentPossible.add(flags.get(flag).getRawFlag());
+            }
+        }
+        List<String> possible = new ArrayList<>();
+        List<String> fuzzyPossible = new ArrayList<>();
+        for (String completion : currentPossible) {
+            if (context.getCurrent() == null) {
+                return currentPossible;
+            }
+            if (completion.toLowerCase().startsWith(context.getCurrent().toLowerCase())) {
+                possible.add(completion);
+            } else if (completion.toLowerCase().contains(context.getCurrent().toLowerCase()))
+                fuzzyPossible.add(completion);
+        }
+        possible.addAll(fuzzyPossible);
+        return possible;
+    }
+
 }
