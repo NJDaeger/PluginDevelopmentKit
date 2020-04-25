@@ -5,7 +5,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.function.BiFunction;
 
-public final class ConfigType<T extends Configuration<T>> {
+public final class ConfigType<T extends IConfig> {
 
     public static final ConfigType<YmlConfig> YML = new ConfigType<>(YmlConfig.class, YmlConfig::new);
 
@@ -22,7 +22,7 @@ public final class ConfigType<T extends Configuration<T>> {
         return type;
     }
 
-    public Configuration<T> createNew(Plugin plugin, String path) {
+    public IConfig createNew(Plugin plugin, String path) {
         return createNew.apply(plugin, path);
     }
 

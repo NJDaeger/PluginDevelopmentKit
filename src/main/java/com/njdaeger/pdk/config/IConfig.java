@@ -34,7 +34,7 @@ public interface IConfig extends ISection {
     boolean isSection(String path);
 
     @Override
-    ConfigType getType();//BaseConfig
+    ConfigType<?> getType();//BaseConfig
 
     /**
      * Gets the config file.

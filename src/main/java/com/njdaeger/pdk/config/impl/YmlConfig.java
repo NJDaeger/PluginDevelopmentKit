@@ -1,7 +1,7 @@
 package com.njdaeger.pdk.config.impl;
 
 import com.njdaeger.pdk.config.ConfigType;
-import com.njdaeger.pdk.config.Configuration;
+import com.njdaeger.pdk.config.IConfig;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -10,13 +10,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-public class YmlConfig extends Configuration<YmlConfig> {
+public class YmlConfig implements IConfig {
 
     private YamlConfiguration config;
+    private final String configName;
+    private final Plugin plugin;
     private final File file;
 
     public YmlConfig(Plugin plugin, String configName) {
-        super(plugin, ConfigType.YML, configName);
+        this.configName = configName;
+        this.plugin = plugin;
 
         File path;
         if (!configName.contains(File.separator)) {
@@ -44,6 +47,11 @@ public class YmlConfig extends Configuration<YmlConfig> {
     }
 
     @Override
+    public String getName() {
+        return configName;
+    }
+
+    @Override
     public Set<String> getKeys(boolean deep) {
         return config.getKeys(deep);
     }
@@ -51,6 +59,11 @@ public class YmlConfig extends Configuration<YmlConfig> {
     @Override
     public Object getValue(String path) {
         return config.get(path);
+    }
+
+    @Override
+    public Plugin getPlugin() {
+        return plugin;
     }
 
     @Override
@@ -66,6 +79,11 @@ public class YmlConfig extends Configuration<YmlConfig> {
     @Override
     public boolean isSection(String path) {
         return getValue(path) != null && getValue(path) instanceof MemorySection;
+    }
+
+    @Override
+    public ConfigType<?> getType() {
+        return ConfigType.YML;
     }
 
     @Override
