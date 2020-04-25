@@ -28,6 +28,9 @@ public interface IConfig extends ISection {
     void addEntry(String path, Object value);
 
     @Override
+    void addComment(String path, String comment);
+
+    @Override
     void setEntry(String path, Object value);
 
     @Override

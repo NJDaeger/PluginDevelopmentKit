@@ -8,16 +8,24 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class YmlConfig implements IConfig {
 
+    private final Map<String, String> comments;
     private YamlConfiguration config;
     private final String configName;
     private final Plugin plugin;
     private final File file;
 
     public YmlConfig(Plugin plugin, String configName) {
+        this.comments = new HashMap<>();
         this.configName = configName;
         this.plugin = plugin;
 
@@ -43,7 +51,6 @@ public class YmlConfig implements IConfig {
             }
         }
         this.config = YamlConfiguration.loadConfiguration(file);
-
     }
 
     @Override
@@ -69,6 +76,11 @@ public class YmlConfig implements IConfig {
     @Override
     public void addEntry(String path, Object value) {
         if (getValue(path) == null) config.set(path, value);
+    }
+
+    @Override
+    public void addComment(String path, String comment) {
+        comments.put(path, comment);
     }
 
     @Override
@@ -100,8 +112,49 @@ public class YmlConfig implements IConfig {
     public void save() {
         try {
             config.save(file);
+
+            List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+            comments.forEach((key, comment) -> {
+                int depth = 0;
+                int lastReadLine = 0;
+                String[] path = key.split("\\.");
+                for (int i = 0; i < path.length; i++) {//Iterate thru each part in the key
+                    for (String line : lines.subList(lastReadLine, lines.size())) {
+                        if (!line.startsWith("#") && line.startsWith(createTab(depth) + path[i] + ":")) {
+                            if (i == path.length-1) {
+                                lines.addAll(lastReadLine, splitComment(depth, comment));
+                            }
+                            depth += 2;
+                            break;
+                        }
+                        lastReadLine++;
+                    }
+                }
+
+            });
+            Files.write(file.toPath(), lines);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private static List<String> splitComment(int depth, String comment) {
+        //The +2 comes from the "# " before the comment.
+        List<String> comments = new ArrayList<>();
+        if (comment.length() + depth + 2 > 120) {
+            int lastCut = 0;
+            while (lastCut < comment.length()) {
+                comments.add(createTab(depth) + "# " + comment.substring(lastCut, ((lastCut + 118 - depth) > comment.length() ? comment.length() : (lastCut + 120) - 2 - depth)));
+                lastCut += (118 - depth);
+            }
+        } else comments.add(createTab(depth) + "# " + comment);
+        return comments;
+    }
+
+    private static String createTab(int depth) {
+        StringBuilder builder = new StringBuilder();
+        while (depth-->0) builder.append(" ");
+        return builder.toString();
+    }
+
 }

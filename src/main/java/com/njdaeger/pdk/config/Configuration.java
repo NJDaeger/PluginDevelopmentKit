@@ -63,6 +63,11 @@ public class Configuration implements IConfig {
     }
 
     @Override
+    public void addComment(String path, String comment) {
+        configFile.addComment(path, comment);
+    }
+
+    @Override
     public void setEntry(String path, Object value) {
         configFile.setEntry(path, value);
     }

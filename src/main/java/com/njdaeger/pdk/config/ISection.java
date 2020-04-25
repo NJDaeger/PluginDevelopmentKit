@@ -335,6 +335,15 @@ public interface ISection {
     }
 
     /**
+     * Adds a comment on top of a specific section in the configuration.
+     * @param path The path to the section the comment is on
+     * @param comment The comment to set.
+     */
+    default void addComment(String path, String comment) {
+        getConfig().addComment(getCurrentPath().isEmpty() ? path : getCurrentPath() + "." + path, comment);
+    }
+
+    /**
      * Gets the current path of the configuration section.
      *
      * @return The current path

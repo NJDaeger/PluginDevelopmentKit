@@ -34,8 +34,6 @@ public class SmartConfig<C extends IConfig> {
     protected <T> T get(String key, T defVal, Predicate<T> restrict) {
         T val;
         if (!configKeys.containsKey(key)) {
-            //Add the entry if it doesnt exist in the configuration.
-            config.addEntry(path, defVal);
             T entry = (T) config.getValueAs(path, defVal.getClass());
             configKeys.put(key, val = (restrict.test(entry) ? entry : defVal));
         } else val = (T) configKeys.get(key);
@@ -45,8 +43,6 @@ public class SmartConfig<C extends IConfig> {
     protected <T> T get(String key, T defVal) {
         T val;
         if (!configKeys.containsKey(key)) {
-            //Add the entry if it doesnt exist in the configuration.
-            config.addEntry(path, defVal);
             T entry = (T) config.getValueAs(path, defVal.getClass());
             configKeys.put(key, val = entry);
         } else val = (T) configKeys.get(key);
