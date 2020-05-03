@@ -35,7 +35,7 @@ public class SmartConfig<C extends IConfig> {
         T val;
         if (!configKeys.containsKey(key)) {
             T entry = (T) config.getValueAs(path, defVal.getClass());
-            configKeys.put(key, val = (restrict.test(entry) ? entry : defVal));
+            configKeys.put(key, val = (entry != null && restrict != null && restrict.test(entry) ? entry : defVal));
         } else val = (T) configKeys.get(key);
         return val == null ? defVal : val;
     }

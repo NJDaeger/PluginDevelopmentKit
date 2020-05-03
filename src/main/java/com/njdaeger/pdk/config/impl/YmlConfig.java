@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class YmlConfig implements IConfig {
 
@@ -141,13 +142,18 @@ public class YmlConfig implements IConfig {
     private static List<String> splitComment(int depth, String comment) {
         //The +2 comes from the "# " before the comment.
         List<String> comments = new ArrayList<>();
-        if (comment.length() + depth + 2 > 120) {
-            int lastCut = 0;
-            while (lastCut < comment.length()) {
-                comments.add(createTab(depth) + "# " + comment.substring(lastCut, ((lastCut + 118 - depth) > comment.length() ? comment.length() : (lastCut + 120) - 2 - depth)));
-                lastCut += (118 - depth);
-            }
-        } else comments.add(createTab(depth) + "# " + comment);
+        String[] lines = comment.split(Pattern.compile("\n", Pattern.LITERAL).pattern());
+        for (String line : lines) {
+
+            if (line.length() + depth + 2 > 120) {
+                int lastCut = 0;
+                while (lastCut < line.length()) {
+                    comments.add(createTab(depth) + "# " + line.substring(lastCut, (lastCut + 118 - depth) > line.length() ? line.length() : (lastCut + 118 - depth)));
+                    lastCut += (118 - depth);
+                }
+            } else comments.add(createTab(depth) + "# " + line);
+
+        }
         return comments;
     }
 
