@@ -7,13 +7,9 @@ import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static com.njdaeger.pdk.utils.Util.getNMSClass;
 
 /**
  * A text component
@@ -37,30 +33,11 @@ public abstract class Text {
      */
     public static void sendTo(TextSection text, Player player) {
         try {
-            Object craftPlayer = player.getClass().getMethod("getHandle").invoke(player);
-            Object connection = craftPlayer.getClass().getField("playerConnection").get(craftPlayer);
-            Class<?> baseComponent = getNMSClass("IChatBaseComponent");
-            Class<?> serializer = getNMSClass("IChatBaseComponent$ChatSerializer");
-            Class<?> chatPacket = getNMSClass("PacketPlayOutChat");
-            Constructor packet = chatPacket.getConstructor(baseComponent, getNMSClass("ChatMessageType"));
-            
-            Object component = serializer.getDeclaredMethod("a", String.class).invoke(null, text.toString());
-            connection.getClass().getMethod("sendPacket", getNMSClass("Packet")).invoke(connection, packet.newInstance(component, getChatMessageType((byte)0)));
+            Util.sendChatPacket(player, text.toString(), 0);
         }
-        catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | NoSuchFieldException | InstantiationException | ClassNotFoundException e) {
-            e.getCause().printStackTrace();
-        }
-    }
-    
-    private static Object getChatMessageType(byte type) {
-        try {
-            Class<?> chatMessage = getNMSClass("ChatMessageType");
-            return chatMessage.getMethod("a", byte.class).invoke(null, type);
-        }
-        catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
     }
     
     /**

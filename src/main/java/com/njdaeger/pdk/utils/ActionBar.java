@@ -2,8 +2,6 @@ package com.njdaeger.pdk.utils;
 
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Constructor;
-
 public final class ActionBar {
     
     /**
@@ -34,16 +32,7 @@ public final class ActionBar {
      */
     public static void sendTo(ActionBar actionBar, Player player) {
         try {
-            Class<?> baseCompClass = Util.getNMSClass("IChatBaseComponent");
-            Class<?> messageTypeClass = Util.getNMSClass("ChatMessageType");
-            Constructor<?> constructor = Util.getNMSClass("PacketPlayOutChat").getConstructor(baseCompClass, messageTypeClass);
-            
-            Object base = baseCompClass.getDeclaredClasses()[0].getMethod("a", String.class).invoke(null, actionBar.text.toString());
-            Object packet = constructor.newInstance(base, messageTypeClass.getEnumConstants()[2]);
-            Object basePlayer = player.getClass().getMethod("getHandle").invoke(player);
-            Object connection = basePlayer.getClass().getField("playerConnection").get(basePlayer);
-            
-            connection.getClass().getMethod("sendPacket", Util.getNMSClass("Packet")).invoke(connection, packet);
+            Util.sendChatPacket(player, actionBar.text.toString(), 2);
         }
         catch (Exception e) {
             e.printStackTrace();
