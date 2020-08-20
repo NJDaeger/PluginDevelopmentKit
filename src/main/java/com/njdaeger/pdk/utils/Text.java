@@ -596,7 +596,8 @@ public abstract class Text {
          */
         public HoverEvent(HoverAction<T> action, T value) {
             this.action = action;
-            this.value = value;
+            if (action == HoverAction.SHOW_TEXT) this.value = (T)((TextSection)value).getParent();
+            else this.value = value;
         }
         
         /**
