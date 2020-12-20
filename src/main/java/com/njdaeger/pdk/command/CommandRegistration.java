@@ -44,6 +44,7 @@ public class CommandRegistration {
     public static void registerCommand(Plugin plugin, PDKCommand command) {
         verifyMaps();
         CommandWrapper wrapper = new CommandWrapper(plugin, command);
+        Bukkit.getHelpMap().addTopic(new PDKHelpTopicFactory().createTopic(wrapper));
         COMMAND_MAP.register(command.getName(), plugin.getName(), wrapper);
     }
     

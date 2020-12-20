@@ -321,13 +321,14 @@ public class PDKCommand {
         List<String> possible = new ArrayList<>();
         List<String> fuzzyPossible = new ArrayList<>();
         for (String completion : currentPossible) {
-            if (context.getCurrent() == null) {
+            if (context.getCurrent() == null || context.getCurrent().isEmpty()) {
                 return currentPossible;
             }
             if (completion.toLowerCase().startsWith(context.getCurrent().toLowerCase())) {
                 possible.add(completion);
-            } else if (completion.toLowerCase().contains(context.getCurrent().toLowerCase()))
+            } else if (completion.toLowerCase().contains(context.getCurrent().toLowerCase())) {
                 fuzzyPossible.add(completion);
+            }
         }
         possible.addAll(fuzzyPossible);
         return possible;
