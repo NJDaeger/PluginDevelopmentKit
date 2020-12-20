@@ -284,8 +284,9 @@ public class PDKCommand {
         try {
             //if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context, true);
 
-            if (context.getCurrent() == null) return computePossible(context.currentPossibleCompletions(), context, false);
+            if (context.getCurrent() == null) return computePossible(context.currentPossibleCompletions(), context, false, null);
             boolean completingFlags = false;
+            String current = context.getCurrent();
             for (Flag<?> flag : flags.values()) {
                 //if (context.hasFlag(flag.getIndicator())) continue;
                 if (flag.hasArgument()) {
@@ -304,15 +305,15 @@ public class PDKCommand {
             }
             if (hasFlags() && context.hasArgs()) ArgumentParser.parseArguments(context, true);
             if (tabExecutor != null && !completingFlags) tabExecutor.complete(context);
-            return computePossible(context.currentPossibleCompletions(), context, completingFlags);
+            return computePossible(context.currentPossibleCompletions(), context, completingFlags, completingFlags ? current : context.getCurrent());
 
         } catch (PDKCommandException e) {
             e.showError(context.getSender());
         }
-        return computePossible(context.currentPossibleCompletions(), context, false);
+        return computePossible(context.currentPossibleCompletions(), context, false, context.getCurrent());
     }
 
-    private List<String> computePossible(List<String> currentPossible, TabContext context, boolean completingFlags) {
+    private List<String> computePossible(List<String> currentPossible, TabContext context, boolean completingFlags, String current) {
         if (hasFlags() && !completingFlags) {
             for (String flag : flags.keySet()) {
                 if (!context.hasFlag(flag)) currentPossible.add(flags.get(flag).getRawFlag());
@@ -321,12 +322,12 @@ public class PDKCommand {
         List<String> possible = new ArrayList<>();
         List<String> fuzzyPossible = new ArrayList<>();
         for (String completion : currentPossible) {
-            if (context.getCurrent() == null || context.getCurrent().isEmpty()) {
+            if (current == null || current.isEmpty()) {
                 return currentPossible;
             }
-            if (completion.toLowerCase().startsWith(context.getCurrent().toLowerCase())) {
+            if (completion.toLowerCase().startsWith(current.toLowerCase())) {
                 possible.add(completion);
-            } else if (completion.toLowerCase().contains(context.getCurrent().toLowerCase())) {
+            } else if (completion.toLowerCase().contains(current.toLowerCase())) {
                 fuzzyPossible.add(completion);
             }
         }
