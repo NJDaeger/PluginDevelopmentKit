@@ -4,10 +4,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public final class Util {
-    
+
+    private static final String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
     private static Class<?> baseCompClass;
     private static Class<?> messageTypeClass;
     private static Constructor<?> constructor;
@@ -15,15 +19,15 @@ public final class Util {
     
     static {
         try {
-            baseCompClass = Util.getNMSClass("IChatBaseComponent");
-            messageTypeClass = Util.getNMSClass("ChatMessageType");
-            packet = Util.getNMSClass("Packet");
+            baseCompClass = Util.getNMSClass("IChatBaseComponent", "net.minecraft.network.chat.");
+            messageTypeClass = Util.getNMSClass("ChatMessageType", "net.minecraft.network.chat.");
+            packet = Util.getNMSClass("Packet", "net.minecraft.network.protocol.");
             
             try {
-                constructor = Util.getNMSClass("PacketPlayOutChat").getConstructor(baseCompClass, messageTypeClass);
+                constructor = Util.getNMSClass("PacketPlayOutChat", "net.minecraft.network.protocol.game.").getConstructor(baseCompClass, messageTypeClass);
             }
             catch (NoSuchMethodException e) {
-                constructor = Util.getNMSClass("PacketPlayOutChat").getConstructor(baseCompClass, messageTypeClass, UUID.class);
+                constructor = Util.getNMSClass("PacketPlayOutChat", "net.minecraft.network.protocol.game.").getConstructor(baseCompClass, messageTypeClass, UUID.class);
             }
             
         }
@@ -44,14 +48,16 @@ public final class Util {
     private Util() {
     }
     
-    public static Class<?> getNMSClass(String className) throws ClassNotFoundException {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        return Class.forName("net.minecraft.server." + version + "." + className);
+    public static Class<?> getNMSClass(String className, String post117Pckg) throws ClassNotFoundException {
+        try {
+            return Class.forName("net.minecraft.server." + VERSION + "." + className);
+        } catch (ClassNotFoundException e) {
+            return Class.forName(post117Pckg + className);
+        }
     }
     
     public static Class<?> getOBCClass(String className) throws ClassNotFoundException {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        return Class.forName("org.bukkit.craftbukkit." + version + "." + className);
+        return Class.forName("org.bukkit.craftbukkit." + VERSION + "." + className);
     }
     
     public static String formatString(String message, Object... placeholders) {
@@ -71,9 +77,34 @@ public final class Util {
      */
     public static void sendChatPacket(Player player, String json, int type) throws Exception {
         Object basePlayer = player.getClass().getMethod("getHandle").invoke(player);
-        Object connection = basePlayer.getClass().getField("playerConnection").get(basePlayer);
+        Object connection;
+        try {
+            connection = basePlayer.getClass().getField("playerConnection").get(basePlayer);
+        } catch (Exception e) {
+            connection = basePlayer.getClass().getField("b").get(basePlayer);
+        }
+        if (connection == null) throw new RuntimeException("Unable to send chat packet. Cannot find player connection.");
         Object chatPacket = createPacket(json, player, type);
-        connection.getClass().getMethod("sendPacket", packet).invoke(connection, chatPacket);
+        Method sendMethod;
+        try {
+            sendMethod = connection.getClass().getMethod("sendPacket", packet);
+        } catch (Exception e) {
+            try {
+                sendMethod = connection.getClass().getMethod("a", packet);
+            } catch (Exception e2) {
+//                Stream.of(connection.getClass().getDeclaredMethods()).forEach(m -> {
+//                    System.out.print(m.getName());
+//                    Stream.of(m.getParameters()).forEach(param -> {
+//                        System.out.print("   " + param.getType().getName());
+//                    });
+//                    System.out.println();
+//                });
+
+                e2.printStackTrace();
+                throw new RuntimeException("Unable to send chat packet. Cannot find packet send method.");
+            }
+        }
+        sendMethod.invoke(connection, chatPacket);
         
     }
     

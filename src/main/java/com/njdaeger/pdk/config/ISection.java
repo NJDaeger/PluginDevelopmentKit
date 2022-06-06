@@ -243,29 +243,38 @@ public interface ISection {
     default <T> T getValueAs(String path, Class<T> type) {
         if (getValue(path) == null) return null;
 
-        if (type.equals(Long.class)) {
-            return (T)Long.valueOf(getValue(path).toString());
-        }
-        if (type.equals(Byte.class)) {
-            return (T)Byte.valueOf(getValue(path).toString());
-        }
-        if (type.equals(Float.class)) {
-            return (T)Float.valueOf(getValue(path).toString());
-        }
-        if (type.equals(Short.class)) {
-            return (T)Short.valueOf(getValue(path).toString());
-        }
-        if (type.equals(Double.class)) {
-            return (T)Double.valueOf(getValue(path).toString());
-        }
-        if (type.equals(Integer.class)) {
-            return (T)Integer.valueOf(getValue(path).toString());
+        try {
+            if (type.equals(Long.class)) {
+                return (T)Long.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Byte.class)) {
+                return (T)Byte.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Float.class)) {
+                return (T)Float.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Short.class)) {
+                return (T)Short.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Double.class)) {
+                return (T)Double.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Integer.class)) {
+                return (T)Integer.valueOf(getValue(path).toString());
+            }
+            if (type.equals(Boolean.class)) {
+                return (T)Boolean.valueOf(getValue(path).toString());
+            }
+        } catch (NumberFormatException e) {
+            getPlugin().getLogger().warning("Could not parse the value of '" + path + getValue(path).toString() + "'. Value is not applicable to '" + type.getSimpleName() + "'.");
+            return null;
         }
         if (type.isEnum()) {
             try {
                 return (T)Enum.valueOf(type.asSubclass(Enum.class), getValue(path).toString().toUpperCase());
             }
             catch (IllegalArgumentException | NullPointerException e) {
+                getPlugin().getLogger().warning("Could not parse the value of '" + path + getValue(path).toString() + "'. Value is not a constant in the enum '" + type.getSimpleName() + "'.");
                 return null;
             }
         }

@@ -34,7 +34,7 @@ public class SmartConfig<C extends IConfig> {
     protected <T> T get(String key, T defVal, Predicate<T> restrict) {
         T val;
         if (!configKeys.containsKey(key)) {
-            T entry = (T) config.getValueAs(path, defVal.getClass());
+            T entry = (T) config.getValueAs(key, defVal.getClass());
             configKeys.put(key, val = (entry != null && restrict != null && restrict.test(entry) ? entry : defVal));
         } else val = (T) configKeys.get(key);
         return val == null ? defVal : val;
@@ -43,8 +43,8 @@ public class SmartConfig<C extends IConfig> {
     protected <T> T get(String key, T defVal) {
         T val;
         if (!configKeys.containsKey(key)) {
-            T entry = (T) config.getValueAs(path, defVal.getClass());
-            configKeys.put(key, val = entry);
+            T entry = (T) config.getValueAs(key, defVal.getClass());
+            configKeys.put(key, val = (entry == null ? defVal : entry));
         } else val = (T) configKeys.get(key);
         return val == null ? defVal : val;
     }

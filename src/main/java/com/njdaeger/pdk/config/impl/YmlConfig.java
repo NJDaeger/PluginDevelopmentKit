@@ -52,6 +52,8 @@ public class YmlConfig implements IConfig {
             }
         }
         this.config = YamlConfiguration.loadConfiguration(file);
+        this.config.options().header(null);
+        this.config.options().copyHeader(false);
     }
 
     @Override
@@ -112,7 +114,6 @@ public class YmlConfig implements IConfig {
     @Override
     public void save() {
         try {
-            config.options().copyHeader(false);
             config.save(file);
 
             List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
