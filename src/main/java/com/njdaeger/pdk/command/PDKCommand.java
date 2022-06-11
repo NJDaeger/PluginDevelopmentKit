@@ -290,6 +290,9 @@ public class PDKCommand {
             for (Flag<?> flag : flags.values()) {
                 //if (context.hasFlag(flag.getIndicator())) continue;
                 if (flag.hasArgument()) {
+                    //if the flag is being completed and this flag has a restriction on when it can be used, check to see if the flag is allowed to be used at the current point
+                    //to do that, we need to create a new instance of the tab context as it was before the current argument was added
+                    if (flag.getAllowWhen() != null && !flag.getAllowWhen().test(new TabContext(context.getPlugin(), this, context.getSender(), context.getAlias(), Arrays.stream(context.args).limit(context.args.length - 1).toArray(String[]::new)))) continue;
                     if (flag.hasSplitter()) {
                         if (context.getCurrent().startsWith(flag.getRawFlag()) || context.isPrevious(flag.getRawFlag())) {
                             flag.complete(context);
@@ -315,9 +318,14 @@ public class PDKCommand {
 
     private List<String> computePossible(List<String> currentPossible, TabContext context, boolean completingFlags, String current) {
         if (hasFlags() && !completingFlags) {
-            for (String flag : flags.keySet()) {
-                if (!context.hasFlag(flag)) currentPossible.add(flags.get(flag).getRawFlag());
-            }
+            flags.forEach((flag, flagValue) -> {
+                if (!context.hasFlag(flag) && (flagValue.getAllowWhen() == null || flagValue.getAllowWhen().test(context))) {
+                    currentPossible.add(flagValue.getRawFlag());
+                }
+            });
+//            for (String flag : flags.keySet()) {
+//                if (!context.hasFlag(flag)) currentPossible.add(flags.get(flag).getRawFlag());
+//            }
         }
         List<String> possible = new ArrayList<>();
         List<String> fuzzyPossible = new ArrayList<>();

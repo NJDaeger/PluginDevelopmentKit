@@ -1,8 +1,11 @@
 package com.njdaeger.pdk.command.flag;
 
 import com.njdaeger.pdk.command.CommandContext;
+import com.njdaeger.pdk.command.TabContext;
 import com.njdaeger.pdk.command.TabExecutor;
 import com.njdaeger.pdk.command.exception.PDKCommandException;
+
+import java.util.function.Predicate;
 
 public abstract class Flag<T> implements TabExecutor {
 
@@ -12,6 +15,7 @@ public abstract class Flag<T> implements TabExecutor {
     private final String flag;
     private final Class<T> type;
     private final boolean hasArgument;
+    private final Predicate<TabContext> predicate;
     
     public Flag(Class<T> type, String description, String usage, String splitter, String aliases) {
         this.type = type;
@@ -20,6 +24,17 @@ public abstract class Flag<T> implements TabExecutor {
         this.flag = aliases;
         this.usage = usage;
         this.hasArgument = true;
+        this.predicate = null;
+    }
+
+    public Flag(Predicate<TabContext> onlyAllowWhen, Class<T> type, String description, String usage, String splitter, String aliases) {
+        this.type = type;
+        this.description = description;
+        this.splitter = splitter;
+        this.flag = aliases;
+        this.usage = usage;
+        this.hasArgument = true;
+        this.predicate = onlyAllowWhen;
     }
     
     public Flag(Class<T> type, String description, String usage, String aliases) {
@@ -29,6 +44,17 @@ public abstract class Flag<T> implements TabExecutor {
         this.flag = aliases;
         this.usage = usage;
         this.hasArgument = true;
+        this.predicate = null;
+    }
+
+    public Flag(Predicate<TabContext> onlyAllowWhen, Class<T> type, String description, String usage, String aliases) {
+        this.type = type;
+        this.description = description;
+        this.splitter = null;
+        this.flag = aliases;
+        this.usage = usage;
+        this.hasArgument = true;
+        this.predicate = onlyAllowWhen;
     }
 
     public Flag(String description, String usage, String aliases) {
@@ -38,8 +64,18 @@ public abstract class Flag<T> implements TabExecutor {
         this.flag = aliases;
         this.usage = usage;
         this.hasArgument = false;
+        this.predicate = null;
     }
-    
+
+    public Flag(Predicate<TabContext> onlyAllowWhen, String description, String usage, String aliases) {
+        this.type = (Class<T>)Boolean.class;
+        this.description = description;
+        this.splitter = null;
+        this.flag = aliases;
+        this.usage = usage;
+        this.hasArgument = false;
+        this.predicate = onlyAllowWhen;
+    }
     
     public Flag(String aliases) {
         this.type = (Class<T>)Boolean.class;
@@ -48,8 +84,19 @@ public abstract class Flag<T> implements TabExecutor {
         this.splitter = null;
         this.flag = aliases;
         this.hasArgument = false;
+        this.predicate = null;
     }
-    
+
+    public Flag(Predicate<TabContext> onlyAllowWhen, String aliases) {
+        this.type = (Class<T>)Boolean.class;
+        this.description = null;
+        this.usage = null;
+        this.splitter = null;
+        this.flag = aliases;
+        this.hasArgument = false;
+        this.predicate = onlyAllowWhen;
+    }
+
    // public Flag(Class<T> type, String flag, boolean hasArgument, String splitter) {
        // this.type = type;
        // this.flag = flag;
@@ -133,6 +180,14 @@ public abstract class Flag<T> implements TabExecutor {
      */
     public String getUsage() {
         return usage;
+    }
+
+    /**
+     * Determines when this flag can be used in a command.
+     * @return The predicate which determines when this flag can be used, or null if there is no usage restriction.
+     */
+    public Predicate<TabContext> getAllowWhen() {
+        return predicate;
     }
 
     public String getRawFlag() {
