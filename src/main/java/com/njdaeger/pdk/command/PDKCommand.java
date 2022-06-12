@@ -292,7 +292,7 @@ public class PDKCommand {
                 if (flag.hasArgument()) {
                     //if the flag is being completed and this flag has a restriction on when it can be used, check to see if the flag is allowed to be used at the current point
                     //to do that, we need to create a new instance of the tab context as it was before the current argument was added
-                    if (flag.getAllowWhen() != null && !flag.getAllowWhen().test(new TabContext(context.getPlugin(), this, context.getSender(), context.getAlias(), Arrays.stream(context.args).limit(context.args.length - 1).toArray(String[]::new)))) continue;
+//                    if (flag.getAllowWhen() != null && !flag.getAllowWhen().test(new TabContext(context.getPlugin(), this, context.getSender(), context.getAlias(), Arrays.stream(context.args).limit(context.args.length - 1).toArray(String[]::new)))) continue;
                     if (flag.hasSplitter()) {
                         if (context.getCurrent().startsWith(flag.getRawFlag()) || context.isPrevious(flag.getRawFlag())) {
                             flag.complete(context);

@@ -38,6 +38,7 @@ public class CommandContext {
     private final Plugin plugin;
     private final String alias;
     protected String[] args;
+    private final String rawCommandString;
 
     public CommandContext(Plugin plugin, PDKCommand command, CommandSender sender, String alias, String[] args) {
         this.typesToStrings = new HashMap<>();
@@ -47,6 +48,7 @@ public class CommandContext {
         this.plugin = plugin;
         this.alias = alias;
         this.args = args;
+        this.rawCommandString = String.join(" ", args);
     }
 
     public String getPluginMessagePrefix() {
@@ -84,6 +86,15 @@ public class CommandContext {
     void setArgs(String... args) {
         this.args = null;
         this.args = args;
+    }
+
+    /**
+     * Get the raw command string that was just used for execution. No flags are taken out of this, it is exactly what is passed to the server, each argument being delimited by a single space.
+     *
+     * @return
+     */
+    public String getRawCommandString() {
+        return rawCommandString;
     }
 
     /**

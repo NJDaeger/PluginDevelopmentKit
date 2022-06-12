@@ -45,7 +45,7 @@ public class ArgumentParser {
                 if (flag.hasArgument()) {
                     for (int i = 0; i < args.size(); i++) {
                         String arg = args.get(i);
-                        if (arg.startsWith("-" + flag.getIndicator())) {
+                        if (arg.equalsIgnoreCase("-" + flag.getIndicator())) {
                             //Check if the split contains the following argument directly after it or the next argument
                             if (args.size() <= i + 1) throw new ArgumentParseException(flag.getIndicator() + "Has no following value", silent);
                             else {
@@ -61,7 +61,7 @@ public class ArgumentParser {
                 else {
                     for (int i = 0; i < args.size(); i++) {
                         String arg = args.get(i);
-                        if (arg.startsWith("-" + flag.getIndicator())) {
+                        if (arg.equalsIgnoreCase("-" + flag.getIndicator())) {
                             classToFlag.put((Class<? extends Flag<?>>) flag.getClass(), flag.getIndicator());
                             flagToObj.put(flag, null);
                             args.remove(i);
