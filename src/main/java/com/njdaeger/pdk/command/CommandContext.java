@@ -63,6 +63,10 @@ public class CommandContext {
         return (G) parsedFlags.get(flag);
     }
 
+    public <G> G getFlag(String flag, G def) {
+        return (G) parsedFlags.getOrDefault(flag, def);
+    }
+
     /**
      * Check if this command context contains certain flags.
      * @param flag The flag to check
@@ -740,6 +744,7 @@ public class CommandContext {
 
     /**
      * Sends the default no permissions message to the sender
+     * @throws PDKCommandException If the sender does not have permission to execute this command.
      */
     public void noPermission() throws PDKCommandException {
         throw new PermissionDeniedException();
@@ -749,6 +754,7 @@ public class CommandContext {
      * Sends a no permissions message to the sender
      *
      * @param message The message to send
+     * @throws PDKCommandException If the sender does not have permission to execute this command.
      */
     public void noPermission(String message) throws PDKCommandException {
         throw new PermissionDeniedException(message);
@@ -756,6 +762,7 @@ public class CommandContext {
 
     /**
      * Sends the default too many arguments message to the sender
+     * @throws PDKCommandException If the sender has too many arguments.
      */
     public void tooManyArgs() throws PDKCommandException {
         throw new TooManyArgsException();
@@ -765,6 +772,7 @@ public class CommandContext {
      * Sends a too many arguments message to the sender
      *
      * @param message The message to send
+     * @throws PDKCommandException If the sender has too many arguments.
      */
     public void tooManyArgs(String message) throws PDKCommandException {
         throw new TooManyArgsException(message);
@@ -772,6 +780,7 @@ public class CommandContext {
 
     /**
      * Sends the default not enough arguments message to the sender
+     *  @throws PDKCommandException If the sender does not have enough arguments.
      */
     public void notEnoughArgs() throws PDKCommandException {
         throw new NotEnoughArgsException();
@@ -781,6 +790,7 @@ public class CommandContext {
      * Sends a not enough arguments message to the sender
      *
      * @param message The message to send
+     * @throws PDKCommandException If the sender does not have enough arguments.
      */
     public void notEnoughArgs(String message) throws PDKCommandException {
         throw new NotEnoughArgsException(message);
@@ -790,6 +800,7 @@ public class CommandContext {
      * Sends an error message to the sender
      *
      * @param message The message to send
+     * @throws PDKCommandException If the command throws an error.
      */
     public void error(String message) throws PDKCommandException {
         throw new PDKCommandException(message);
