@@ -6,9 +6,18 @@ import org.bukkit.entity.Player;
 public class DefaultChatSender implements IChatSender {
 
     @Override
-    public void sendJson(String json, Player player) {
+    public void sendChatJson(String json, Player player) {
         try {
             Util.sendChatPacket(player, json, 0);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void sendActionBarJson(String json, Player player) {
+        try {
+            Util.sendChatPacket(player, json, 2);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

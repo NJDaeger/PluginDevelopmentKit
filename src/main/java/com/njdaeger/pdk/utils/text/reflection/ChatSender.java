@@ -13,6 +13,7 @@ public class ChatSender {
 
     private static void loadChatSender() {
         chatSender = switch (Version.getCurrentVersion()) {
+            case v1_20 -> new v120ChatSender();
             default -> new DefaultChatSender();
         };
 

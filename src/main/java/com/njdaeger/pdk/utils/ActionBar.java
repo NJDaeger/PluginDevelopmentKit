@@ -1,5 +1,6 @@
 package com.njdaeger.pdk.utils;
 
+import com.njdaeger.pdk.utils.text.reflection.ChatSender;
 import org.bukkit.entity.Player;
 
 public final class ActionBar {
@@ -11,7 +12,7 @@ public final class ActionBar {
      * @return The newly created actionbar
      */
     public static ActionBar of(String text) {
-        return of(Text.of(text));
+        return of(com.njdaeger.pdk.utils.text.Text.of(text));
     }
     
     /**
@@ -20,7 +21,7 @@ public final class ActionBar {
      * @param text The text to use in this actionbar
      * @return The newly created actionbar
      */
-    public static ActionBar of(Text.TextSection text) {
+    public static ActionBar of(com.njdaeger.pdk.utils.text.Text.Section text) {
         return new ActionBar(text);
     }
     
@@ -32,16 +33,16 @@ public final class ActionBar {
      */
     public static void sendTo(ActionBar actionBar, Player player) {
         try {
-            Util.sendChatPacket(player, actionBar.text.toString(), 2);
+            ChatSender.getChatSender().sendActionBarJson(actionBar.text.toString(), player);
         }
         catch (Exception e) {
             e.printStackTrace();
         }
     }
     
-    private final Text.TextSection text;
+    private final com.njdaeger.pdk.utils.text.Text.Section text;
     
-    private ActionBar(Text.TextSection text) {
+    private ActionBar(com.njdaeger.pdk.utils.text.Text.Section text) {
         this.text = text;
     }
     

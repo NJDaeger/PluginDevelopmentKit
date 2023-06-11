@@ -12,9 +12,10 @@ public enum Version {
     v1_16("116", "Minecraft 1.16.x", (s) -> s.contains("v1_16"), false),
     v1_17("117", "Minecraft 1.17.x", (s) -> s.contains("v1_17"), false),
     v1_18("118", "Minecraft 1.18.x", (s) -> s.contains("v1_18"), false),
-    v1_19_4("119", "Minecraft 1.19.4", (s) -> s.contains("v1_19_R3"), true),
-    v1_19_3("119", "Minecraft 1.19.3", (s) -> s.contains("v1_19_R2"), true),
-    v1_19("119", "Minecraft 1.19.x", (s) -> s.contains("v1_19"), false);
+    v1_19_4("119", "Minecraft 1.19.4", (s) -> s.contains("v1_19_R3"), false),
+    v1_19_3("119", "Minecraft 1.19.3", (s) -> s.contains("v1_19_R2"), false),
+    v1_19("119", "Minecraft 1.19.x", (s) -> s.contains("v1_19"), false),
+    v1_20("120", "Minecraft 1.20.x", (s) -> s.contains("v1_20"), true);
 
     protected final String pkg;
     private final boolean latest;

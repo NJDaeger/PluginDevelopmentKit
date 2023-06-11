@@ -105,7 +105,16 @@ public class Text implements IText {
         //rather than trying to run the nms adapter, lets use the tellraw command internally to send the json, this way we dont have to do anything special to get it to work.
 
         Stream.of(senders).forEach(sender -> {
-            if (sender instanceof Player p) ChatSender.getChatSender().sendJson(this.getJson().toString(), p);
+            if (sender instanceof Player p) {
+                try {
+                    ChatSender.getChatSender().sendChatJson(this.getJson().toString(), p);
+                } catch (Exception e) {
+                    var string = new StringBuilder();
+                    Section.appendFormattedString(this, string);
+                    sender.sendMessage(string.toString());
+                    throw new RuntimeException(e);
+                }
+            }
             else {
                 var string = new StringBuilder();
                 Section.appendFormattedString(this, string);

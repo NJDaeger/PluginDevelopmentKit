@@ -69,7 +69,9 @@ public class ChatPaginator<T, B> {
      * @return The component with the correct amount of padding.
      */
     private IComponent<T, B> ensurePadding(B generatorInfo, IComponent<T, B> component, List<T> results, int page) {
-        var raw = component.getText(generatorInfo, this, results, page).asUnformattedString();
+        var section = component.getText(generatorInfo, this, results, page);
+        if (section == null) return null;
+        var raw = section.asUnformattedString();
         var text = component.getText(generatorInfo, this, results, page);
         if (!raw.endsWith(" ")) text.appendRoot(" ");
         if (!raw.startsWith(" ")) return (info1, pager1, results1, currentPage1) -> Text.of(" ").appendRoot(text);
@@ -117,33 +119,38 @@ public class ChatPaginator<T, B> {
 
         if (components.containsKey(ComponentPosition.TOP_LEFT)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.TOP_LEFT), results, page);
-            leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
-
-            header.appendRoot(text.getText(generatorInfo, this, results, page));
-            header.appendRoot("=").setColor(grayColor);
-            --leftEqualSignCount;
+            if (text != null) {
+                leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
+                header.appendRoot(text.getText(generatorInfo, this, results, page));
+                header.appendRoot("=").setColor(grayColor);
+                --leftEqualSignCount;
+            }
         }
 
         if (components.containsKey(ComponentPosition.TOP_CENTER)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.TOP_CENTER), results, page);
-            leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
-            rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
+            if (text != null) {
+                leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
+                rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
 
-            if(leftEqualSignCount > 0) header.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
-            header.appendRoot(text.getText(generatorInfo, this, results, page));
+                if(leftEqualSignCount > 0) header.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
+                header.appendRoot(text.getText(generatorInfo, this, results, page));
+            } else header.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
         } else {
             header.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
         }
 
         if (components.containsKey(ComponentPosition.TOP_RIGHT)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.TOP_RIGHT), results, page);
-            rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
+            if (text != null) {
+                rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
 
-            header.appendRoot("=").setColor(grayColor);
-            --leftEqualSignCount;
+                header.appendRoot("=").setColor(grayColor);
+                --rightEqualSignCount;
 
-            if (rightEqualSignCount > 0) header.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
-            header.appendRoot(text.getText(generatorInfo, this, results, page));
+                if (rightEqualSignCount > 0) header.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
+                header.appendRoot(text.getText(generatorInfo, this, results, page));
+            } else header.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
         } else {
             header.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
         }
@@ -164,33 +171,38 @@ public class ChatPaginator<T, B> {
 
         if (components.containsKey(ComponentPosition.BOTTOM_LEFT)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.BOTTOM_LEFT), results, page);
-            leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
-
-            footer.appendRoot(text.getText(generatorInfo, this, results, page));
-            footer.appendRoot("=").setColor(grayColor);
-            --leftEqualSignCount;
+            if (text != null) {
+                leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
+                footer.appendRoot(text.getText(generatorInfo, this, results, page));
+                footer.appendRoot("=").setColor(grayColor);
+                --leftEqualSignCount;
+            }
         }
 
         if (components.containsKey(ComponentPosition.BOTTOM_CENTER)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.BOTTOM_CENTER), results, page);
-            leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
-            rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
+            if (text != null) {
+                leftEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
+                rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page) / 2;
 
-            if(leftEqualSignCount > 0) footer.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
-            footer.appendRoot(text.getText(generatorInfo, this, results, page));
+                if(leftEqualSignCount > 0) footer.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
+                footer.appendRoot(text.getText(generatorInfo, this, results, page));
+            } else footer.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
         } else {
             footer.appendRoot("=".repeat(leftEqualSignCount)).setColor(grayColor);
         }
 
         if (components.containsKey(ComponentPosition.BOTTOM_RIGHT)) {
             var text = ensurePadding(generatorInfo, components.get(ComponentPosition.BOTTOM_RIGHT), results, page);
-            rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
+            if (text != null) {
+                rightEqualSignCount -= getEqualSignCount(generatorInfo, text, results, page);
 
-            footer.appendRoot("=").setColor(grayColor);
-            --leftEqualSignCount;
+                footer.appendRoot("=").setColor(grayColor);
+                --rightEqualSignCount;
 
-            if (rightEqualSignCount > 0) footer.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
-            footer.appendRoot(text.getText(generatorInfo, this, results, page));
+                if (rightEqualSignCount > 0) footer.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
+                footer.appendRoot(text.getText(generatorInfo, this, results, page));
+            } else footer.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
         } else {
             footer.appendRoot("=".repeat(rightEqualSignCount)).setColor(grayColor);
         }
