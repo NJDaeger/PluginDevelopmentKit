@@ -1,7 +1,6 @@
 package com.njdaeger.pdk.command;
 
 import com.njdaeger.pdk.command.flag.Flag;
-import org.apache.commons.lang.Validate;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Collection;
@@ -11,12 +10,12 @@ public class CommandBuilder {
     private final PDKCommand command;
     
     public static CommandBuilder of(String... aliases) {
-        Validate.notEmpty(aliases, "You must provide a name for your command.");
+        if (aliases.length == 0) throw new IllegalArgumentException("You must provide a name for your command.");
         return new CommandBuilder(aliases);
     }
     
     public static CommandBuilder of(Collection<String> aliases) {
-        Validate.notEmpty(aliases, "You must provide a name for your command.");
+        if (aliases.isEmpty()) throw new IllegalArgumentException("You must provide a name for your command.");
         return of(aliases.toArray(new String[0]));
     }
     

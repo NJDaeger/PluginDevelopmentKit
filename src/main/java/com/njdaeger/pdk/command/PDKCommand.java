@@ -2,7 +2,6 @@ package com.njdaeger.pdk.command;
 
 import com.njdaeger.pdk.command.exception.PDKCommandException;
 import com.njdaeger.pdk.command.flag.Flag;
-import org.apache.commons.lang.Validate;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
@@ -29,7 +28,7 @@ public class PDKCommand {
      * @param nameAndAliases The name and aliases of this command
      */
     public PDKCommand(String[] nameAndAliases) {
-        Validate.notEmpty(nameAndAliases, "You must specify a name for the command.");
+        if (nameAndAliases.length == 0) throw new RuntimeException("You must specify a name for the command.");
         this.aliases = nameAndAliases;
         this.flags = new HashMap<>();
     }

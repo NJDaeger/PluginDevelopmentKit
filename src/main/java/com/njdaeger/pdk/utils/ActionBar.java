@@ -1,5 +1,6 @@
 package com.njdaeger.pdk.utils;
 
+import com.njdaeger.pdk.utils.text.Text;
 import com.njdaeger.pdk.utils.text.reflection.ChatSender;
 import org.bukkit.entity.Player;
 
@@ -12,16 +13,16 @@ public final class ActionBar {
      * @return The newly created actionbar
      */
     public static ActionBar of(String text) {
-        return of(com.njdaeger.pdk.utils.text.Text.of(text));
+        return of(Text.of(text));
     }
     
     /**
-     * Create an action bar with the initial {@link com.njdaeger.pdk.utils.Text.TextSection} provided from the parameter
+     * Create an action bar with the initial {@link Text.Section} provided from the parameter
      *
      * @param text The text to use in this actionbar
      * @return The newly created actionbar
      */
-    public static ActionBar of(com.njdaeger.pdk.utils.text.Text.Section text) {
+    public static ActionBar of(Text.Section text) {
         return new ActionBar(text);
     }
     
@@ -40,9 +41,9 @@ public final class ActionBar {
         }
     }
     
-    private final com.njdaeger.pdk.utils.text.Text.Section text;
+    private final Text.Section text;
     
-    private ActionBar(com.njdaeger.pdk.utils.text.Text.Section text) {
+    private ActionBar(Text.Section text) {
         this.text = text;
     }
     
