@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.njdaeger</groupId>
-    <artifactId>PluginDevelopmentKit</artifactId>
+    <artifactId>plugin-development-kit</artifactId>
     <version>0.0.7-SNAPSHOT</version>
 
     <repositories>
