@@ -1,9 +1,9 @@
 package com.njdaeger.pdk.utils.text.pager.components;
 
-import com.njdaeger.pdk.utils.text.Text;
-import com.njdaeger.pdk.utils.text.hover.HoverAction;
 import com.njdaeger.pdk.utils.text.pager.ChatPaginator;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.HoverEvent;
 
 import java.text.CompactNumberFormat;
 import java.text.NumberFormat;
@@ -28,8 +28,16 @@ public class ResultCountComponent<T, B> implements IComponent<T, B> {
     }
 
     @Override
-    public Text.Section getText(B generatorInfo, ChatPaginator<T, B> paginator, List<T> results, int currentPage) {
-        if (compact) return Text.of(formatter.format(results.size())).setColor(paginator.getHighlightColor()).setHoverEvent(HoverAction.SHOW_TEXT, Text.of(results.size() + "").setColor(ChatColor.GRAY));
-        else return Text.of(String.format("%-" + padding + "d", results.size())).setColor(paginator.getHighlightColor()).append(" Matches");
+    public TextComponent getText(B generatorInfo, ChatPaginator<T, B> paginator, List<T> results, int currentPage) {
+        if (compact) return Component.text()
+                .content(formatter.format(results.size()))
+                .color(paginator.getHighlightColor())
+                .hoverEvent(HoverEvent.showText(Component.text(results.size() + "", paginator.getGrayColor())))
+                .build();
+        else return Component.text()
+                .content(String.format("%-" + padding + "d", results.size()))
+                .color(paginator.getHighlightColor())
+                .append(Component.text(" Matches"))
+                .build();
     }
 }

@@ -1,18 +1,19 @@
 package com.njdaeger.pdk.utils.text.pager;
 
-import com.njdaeger.pdk.utils.text.Text;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class PageResult<T> {
 
     private final int requestedPage;
     private final int maxPage;
-    private final Text.Section message;
+    private final TextComponent message;
     private final List<T> results;
 
-    PageResult(int requestedPage, int maxPage, Text.Section message, List<T> results) {
+    PageResult(int requestedPage, int maxPage, TextComponent message, List<T> results) {
         this.requestedPage = requestedPage;
         this.maxPage = maxPage;
         this.message = message;
@@ -39,7 +40,7 @@ public class PageResult<T> {
      * Get the message to send to the user.
      * @return The message to send to the user.
      */
-    public Text.Section getMessage() {
+    public TextComponent getMessage() {
         return message;
     }
 
@@ -56,7 +57,7 @@ public class PageResult<T> {
      * @param users The users to send the message to.
      */
      public void sendTo(CommandSender... users) {
-        if (message != null) message.sendTo(users);
+        if (message != null) Stream.of(users).forEach(u -> u.sendMessage(message));
     }
 
     /**
@@ -64,9 +65,9 @@ public class PageResult<T> {
      * @param unknownPage The message to send if the message is null.
      * @param users The users to send the message to.
      */
-    public void sendTo(Text.Section unknownPage, CommandSender... users) {
-        if (message != null) message.sendTo(users);
-        else unknownPage.sendTo(users);
+    public void sendTo(TextComponent unknownPage, CommandSender... users) {
+        if (message != null) Stream.of(users).forEach(u -> u.sendMessage(message));
+        else Stream.of(users).forEach(u -> u.sendMessage(unknownPage));
     }
 
 }
