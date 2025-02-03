@@ -1,6 +1,9 @@
 package com.njdaeger.pdk.utils.text.reflection;
 
 import com.njdaeger.pdk.utils.Util;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Constructor;
@@ -48,6 +51,7 @@ public class v1204ChatSender implements IChatSender {
 
     @Override
     public void sendChatJson(String json, Player player) throws Exception {
+        GsonComponentSerializer.gson().deserialize(json);
         Object basePlayer = IChatSender.getBasePlayer(player); //EntityPlayer
         Object connection = basePlayer.getClass().getDeclaredField("c").get(basePlayer); //PlayerConnection
         if (connection == null) throw new RuntimeException("Could not find player connection field. Looked for: c");

@@ -1,0 +1,496 @@
+package com.njdaeger.pdk.command.brigadier;
+
+import com.njdaeger.pdk.command.exception.PDKCommandException;
+import com.njdaeger.pdk.command.exception.PermissionDeniedException;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Stream;
+
+/**
+ *
+ */
+public interface ICommandContext {
+
+//    /**
+//     * Check if a flag has been used in this command execution.
+//     * @param flag The flag to check for
+//     * @return True if the flag was used, false otherwise
+//     */
+//    @Contract(pure = true, value = "null -> fail")
+//    boolean hasFlag(String flag);
+//
+//    /**
+//     * Get the value of a flag from this command execution
+//     * @param flag The flag to get the value of
+//     * @param <T> The type of the flag
+//     * @return The value of the flag, null if no flag exists.
+//     */
+//    @Nullable
+//    @Contract(pure = true, value = "null -> fail")
+//    <T> T getFlag(String flag);
+//
+//    /**
+//     * Get the value of a flag from this command execution or return a default value if the flag does not exist
+//     * @param flag The flag to get the value of
+//     * @param defaultValue The default value to return if the flag does not exist
+//     * @param <T> The type of the flag
+//     * @return The value of the flag, or the default value if the flag does not exist
+//     */
+//    @Nullable
+//    @Contract(pure = true, value = "null, _ -> fail;  _, null -> null")
+//    <T> T getFlagOrDefault(String flag, T defaultValue);
+
+    /**
+     * Get the alias of the command that was executed
+     * @return The alias of the command that was executed
+     */
+    @NotNull
+    default String getAlias() {
+        return getRawCommandArgs()[0];
+    }
+
+    /**
+     * Get the sender of the command
+     * @return The sender of the command
+     */
+    @NotNull
+    CommandSender getSender();
+
+    /**
+     * Get the raw command string that was executed including all flags and the command alias
+     * @return The raw command string that was executed.
+     */
+    @NotNull
+    String getRawCommandString();
+
+    /**
+     * Get the raw command arguments that were executed. This includes all flags that were passed and the command alias used.
+     * @return The raw command arguments that were executed. Will return an array with one entry if there are no arguments to the command (the alias used)
+     */
+    @NotNull
+    default String[] getRawCommandArgs() {
+        return getRawCommandString().split(" ");
+    }
+
+    /**
+     * Get the arguments that were passed to the command. This does not include flags nor the command alias.
+     * @return The arguments that were passed to the command. Will return an empty array if there are no arguments.
+     */
+    @NotNull
+    String[] getArgs();
+
+    /**
+     * Get the number of arguments that were passed to the command. This does not include flags nor the command alias.
+     * @return The number of arguments that were passed to the command.
+     */
+    @Contract(pure = true)
+    default int getArgCount() {
+        return getArgs().length;
+    }
+
+    /**
+     * Check if the number of arguments passed to the command is equal to the given length
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLength(int length) {
+        return getArgCount() == length;
+    }
+
+    /**
+     * Check if the number of arguments passed to the command is greater than the given length
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is greater than the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isGreater(int length) {
+        return getArgCount() > length;
+    }
+
+    /**
+     * Check if the number of arguments passed to the command is less than the given length
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is less than the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLess(int length) {
+        return getArgCount() < length;
+    }
+
+    /**
+     * Check if the number of arguments passed to the command is greater than or equal to the given length
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is greater than or equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isGreaterOrEqual(int length) {
+        return getArgCount() >= length;
+    }
+
+    /**
+     * Check if the number of arguments passed to the command is less than or equal to the given length
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is less than or equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLessOrEqual(int length) {
+        return getArgCount() <= length;
+    }
+
+    /**
+     * Check if this command execution has any arguments with it
+     * @return True if the command execution has arguments, false otherwise
+     */
+    default boolean hasArgs() {
+        return getArgCount() > 0;
+    }
+
+    /**
+     * Check if this command execution has an argument at the given index
+     * @param index The index of the argument to check for
+     * @return True if the command execution has an argument at the given index, false otherwise
+     */
+    default boolean hasArgAt(int index) {
+        return index >= 0 && index < getArgCount();
+    }
+
+    /**
+     * Join all of the arguments passed to the command into a single string
+     * @return All of the arguments passed to the command joined into a single string
+     */
+    default String joinArgs() {
+        return String.join(" ", getArgs());
+    }
+
+    /**
+     * Join all of the arguments passed to the command into a single string starting at the given index
+     * @param start The (inclusive) index to start joining arguments at
+     * @return All of the arguments passed to the command joined into a single string starting at the given index
+     */
+    default String joinArgs(int start) {
+        return joinArgs(start, getArgCount());
+    }
+
+    /**
+     * Join all of the arguments passed to the command into a single string starting at the given index and finishing at the given index
+     * @param start The (inclusive) index to start joining arguments at
+     * @param finish The (exclusive) index to finish joining arguments at
+     * @return All of the arguments passed to the command joined into a single string starting at the given index and finishing at the given index
+     */
+    default String joinArgs(int start, int finish) {
+        if (start < 0 || finish < 0) throw new IllegalArgumentException("Start and finish must be greater than or equal to 0.");
+        if (start > finish) throw new IllegalArgumentException("Start cannot be greater than finish.");
+        if (finish > getArgCount()) throw new IllegalArgumentException("Finish cannot be greater than the number of arguments.");
+        return String.join(" ", List.of(getArgs()).subList(start, finish));
+    }
+
+    /**
+     * Get the first argument passed to the command. This will return null if there are no arguments.
+     * @return The first argument passed to the command. Will return null if there are no arguments.
+     */
+    @Nullable
+    @Contract(pure = true)
+    default String first() {
+        return getArgCount() > 0 ? getArgs()[0] : null;
+    }
+
+    /**
+     * Get the last argument passed to the command. This will return null if there are no arguments.
+     * @return The last argument passed to the command. Will return null if there are no arguments.
+     */
+    @Nullable
+    @Contract(pure = true)
+    default String last() {
+        return getArgCount() > 0 ? getArgs()[getArgCount() - 1] : null;
+    }
+
+    /**
+     * Get the argument at the given index. This will return null if the index is out of bounds.
+     * @param index The index of the argument to get
+     * @return The argument at the given index. Will return null if the index is out of bounds.
+     */
+    @Nullable
+    @Contract(pure = true)
+    default String get(int index) {
+        return index >= 0 && index < getArgCount() ? getArgs()[index] : null;
+    }
+
+    /**
+     * Get the argument at the given index or return a default value if the index is out of bounds.
+     * @param index The index of the argument to get
+     * @param defaultValue The default value to return if the index is out of bounds
+     * @return The argument at the given index or the default value if the index is out of bounds.
+     */
+    @Nullable
+    @Contract(pure = true)
+    default String getOrDefault(int index, String defaultValue) {
+        return get(index) != null ? get(index) : defaultValue;
+    }
+
+    /**
+     * Check if the command context has a typed argument
+     * @param argName The name of the argument
+     * @return True if the command context has the argument, false otherwise
+     */
+    default boolean hasTyped(String argName) {
+        return getTyped(argName) != null;
+    }
+
+    /**
+     * Get a typed argument from the command context as a string.
+     * @param argName The name of the argument
+     * @return The argument value
+     */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail")
+    String getTyped(String argName);
+
+    /**
+     * Get a typed argument from the command context as a string or return a default value if the argument does not exist
+     * @param argName The name of the argument
+     * @param defVal The default value to return if the argument does not exist
+     * @return The argument value or the default value if the argument does not exist
+     */
+    @Nullable
+    @Contract(pure = true, value = "null, _ -> fail; _, null -> null")
+    default <T> T getTyped(String argName, T defVal) {
+        if (!hasTyped(argName)) return defVal;
+        return getTyped(argName, (Class<T>)defVal.getClass());
+    }
+
+    /**
+     * Get aa typed argument from the command context
+     * @param argName The name of the argument
+     * @param type The type of the argument
+     * @param <T> The type of the argument
+     * @return The argument value
+     */
+    @Nullable
+    @Contract(pure = true, value = "null, _ -> fail; _, null -> fail")
+    <T> T getTyped(String argName, Class<T> type);
+
+    /**
+     * Get a typed argument from the command context or return a default value if the argument does not exist
+     * @param argName The name of the argument
+     * @param type The type of the argument
+     * @param defVal The default value to return if the argument does not exist
+     * @param <T> The type of the argument
+     * @return The argument value or the default value if the argument does not exist
+     */
+    @Nullable
+    @Contract(pure = true, value = "null, _, _ -> fail; _, null, _ -> fail; _, _, null -> null")
+    default <T> T getTypedOrDefault(String argName, Class<T> type, T defVal) {
+        if (!hasTyped(argName)) return defVal;
+        return getTyped(argName, type);
+    }
+
+    /**
+     * Check if the sender has a permission
+     * @param permission The permission to check for
+     * @return True if the sender has the permission, false otherwise
+     */
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default boolean hasPermission(String permission) {
+        if (permission == null) throw new IllegalArgumentException("Permission cannot be null.");
+        return getSender().hasPermission(permission);
+    }
+
+    /**
+     * Check if the sender has any of the permissions
+     * @param permissions The permissions to check for
+     * @return True if the sender has any of the permissions, false otherwise
+     */
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default boolean hasAnyPermission(String... permissions) {
+        if (permissions == null) throw new IllegalArgumentException("Permissions cannot be null.");
+        return Stream.of(permissions).anyMatch(this::hasPermission);
+    }
+
+    /**
+     * Check if the sender has all of the permissions
+     * @param permissions The permissions to check for
+     * @return True if the sender has all of the permissions, false otherwise
+     */
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default boolean hasAllPermissions(String... permissions) {
+        if (permissions == null) throw new IllegalArgumentException("Permissions cannot be null.");
+        return Stream.of(permissions).allMatch(this::hasPermission);
+    }
+
+    /**
+     * Check if the sender is the console
+     * @return True if the sender is the console, false otherwise
+     */
+    default boolean isConsole() {
+        return getSender() instanceof ConsoleCommandSender;
+    }
+
+    /**
+     * get the sender as a console sender
+     * @return the sender as a console sender
+     */
+    @Nullable
+    @Contract(pure = true)
+    default ConsoleCommandSender asConsole() {
+        return isConsole() ? (ConsoleCommandSender)getSender() : null;
+    }
+
+    /**
+     * Check if the sender is a player
+     * @return True if the sender is a player, false otherwise
+     */
+    default boolean isPlayer() {
+        return getSender() instanceof Player;
+    }
+
+    /**
+     * Get the sender as a player
+     * @return The sender as a player
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Player asPlayer() {
+        return isPlayer() ? (Player)getSender() : null;
+    }
+
+    /**
+     * Check if the sender is a block
+     * @return True if the sender is a block, false otherwise
+     */
+    default boolean isBlock() {
+        return getSender() instanceof BlockCommandSender;
+    }
+
+    /**
+     * Get the sender as a block sender
+     * @return The sender as a block sender
+     */
+    @Nullable
+    @Contract(pure = true)
+    default BlockCommandSender asBlock() {
+        return isBlock() ? (BlockCommandSender)getSender() : null;
+    }
+
+    /**
+     * Check if the sender is an entity
+     * @return True if the sender is an entity, false otherwise
+     */
+    default boolean isEntity() {
+        return getSender() instanceof Entity;
+    }
+
+    /**
+     * Get the sender as an entity
+     * @return The sender as an entity
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Entity asEntity() {
+        return isEntity() ? (Entity)getSender() : null;
+    }
+
+    /**
+     * Check if the sender is an instance of the given type
+     * @param type The type to check for
+     * @param <S> The type to check for
+     * @return True if the sender is an instance of the given type, false otherwise
+     */
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default <S extends CommandSender> boolean is(Class<S> type) {
+        if (type == null) throw new IllegalArgumentException("Type cannot be null.");
+        return type.isInstance(getSender());
+    }
+
+    /**
+     * Get the sender as the given type
+     * @param type The type to get the sender as
+     * @param <S> The type to get the sender as
+     * @return The sender as the given type
+     */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default <S extends CommandSender> S as(Class<S> type) {
+        if (type == null) throw new IllegalArgumentException("Type cannot be null.");
+        return is(type) ? type.cast(getSender()) : null;
+    }
+
+    /**
+     * Check if the sender is locatable
+     * @return True if the sender is locatable, false otherwise
+     */
+    default boolean isLocatable() {
+        return isPlayer() || isBlock() || isEntity();
+    }
+
+    /**
+     * Get the location of the sender
+     * @return The location of the sender
+     * @throws PDKCommandException If the sender is not locatable
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Location getLocation() throws PDKCommandException {
+        if (isPlayer()) return asPlayer().getLocation();
+        if (isBlock()) return asBlock().getBlock().getLocation();
+        if (isEntity()) return asEntity().getLocation();
+        return null;
+    }
+
+    /**
+     * @throws PDKCommandException due to a lack of permissions
+     */
+    @Contract(pure = true , value = "-> fail")
+    default void noPermission() throws PDKCommandException {
+        throw new PermissionDeniedException("You do not have permission to run this command.");
+    }
+
+    /**
+     * @param message The message to send to the sender
+     * @throws PDKCommandException due to a lack of permissions
+     */
+    @Contract(pure = true , value = "_ -> fail")
+    default void noPermission(String message) throws PDKCommandException {
+        throw new PermissionDeniedException(message);
+    }
+
+    /**
+     * @throws PDKCommandException due to an error
+     */
+    @Contract(pure = true , value = "_ -> fail")
+    default void error(String message) throws PDKCommandException {
+        throw new PDKCommandException(message);
+    }
+
+    /**
+     * Sends a message to the command sender
+     * @param message The message to send
+     */
+    @Contract(pure = true , value = "null -> fail; !null -> _")
+    default void send(String message) {
+        if (message == null) throw new IllegalArgumentException("Message cannot be null.");
+        getSender().sendMessage(message);
+    }
+
+    /**
+     * Sends a component to the command sender
+     * @param component The component to send
+     */
+    @Contract(pure = true , value = "null -> fail; !null -> _")
+    default void send(Component component) {
+        if (component == null) throw new IllegalArgumentException("Component cannot be null.");
+        getSender().sendMessage(component);
+    }
+
+}

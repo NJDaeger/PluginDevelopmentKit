@@ -1,10 +1,12 @@
 package com.njdaeger.pdk.command.exception;
 
+import com.mojang.brigadier.Message;
+import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.njdaeger.pdk.PDKException;
 import com.njdaeger.pdk.command.PDKCommand;
 import org.bukkit.command.CommandSender;
 
-public class PDKCommandException extends Exception {
+public class PDKCommandException extends Exception implements CommandExceptionType, Message {
 
     private boolean quiet;
 
@@ -29,6 +31,11 @@ public class PDKCommandException extends Exception {
         if (!quiet) sender.sendMessage(getMessage());
     }
 
+    @Override
+    public String getString() {
+        return getMessage();
+    }
+
 
     /*
     
@@ -36,6 +43,8 @@ public class PDKCommandException extends Exception {
         .literal("pass", "p").finishOr(this::pass).argument("player", PlayerArg.class).finish(this::passPlayer).next()
         .literal("fail", "f").finishOr(this::fail).argument("player", PlayerArg.class).finish(this::failPlayer).build();
     Generates: /testresult pass|fail [player]
+
+    SmartCommandBuilder.
     
     Builder.create("pass", "p")
         .finishOr(this::pass).argument("player", PlayerArg.class).finish(this::passPlayer).build();
