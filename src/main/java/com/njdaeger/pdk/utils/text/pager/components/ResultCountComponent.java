@@ -22,7 +22,7 @@ public class ResultCountComponent<T, B> implements IComponent<T, B> {
     }
 
     public ResultCountComponent(boolean compact) {
-        this.padding = -1;
+        this.padding = compact ? -1 : 4;
         this.compact = compact;
         formatter.setMaximumFractionDigits(2);
     }
@@ -37,7 +37,7 @@ public class ResultCountComponent<T, B> implements IComponent<T, B> {
         else return Component.text()
                 .content(String.format("%-" + padding + "d", results.size()))
                 .color(paginator.getHighlightColor())
-                .append(Component.text(" Matches"))
+                .append(Component.text(" Matches").appendSpace())
                 .build();
     }
 }

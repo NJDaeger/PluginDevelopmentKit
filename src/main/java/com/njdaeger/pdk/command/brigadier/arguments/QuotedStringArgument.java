@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments.types;
+package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
-import com.njdaeger.pdk.command.brigadier.impl.ExecutionHelpers;
+import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class QuotedStringArgument extends PdkArgumentType<String, String> {
+public class QuotedStringArgument extends BasePdkArgumentType<String, String> {
 
     private final boolean allowEmpty;
     private final Message defaultTooltipMessage;
@@ -60,7 +60,7 @@ public class QuotedStringArgument extends PdkArgumentType<String, String> {
 
     @Override
     public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        var quotedSuggestions = listSuggestions(ExecutionHelpers.createCommandContext((CommandContext<CommandSourceStack>) context));
+        var quotedSuggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
         var current = builder.getRemaining();
         var completingAt = builder.getStart() + (current.contains("\"") ? current.indexOf('"') + 1 : 0);
         var newBuilder = builder.createOffset(completingAt);

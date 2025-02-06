@@ -96,7 +96,7 @@ public class ChatPaginator<T, B> {
      */
     public PageResult<T> generatePage(B generatorInfo, List<T> results, int page) {
         int maxPage = (int) Math.ceil(results.size() / 8.0);
-        if (page < 1 || page > maxPage) return null;
+        if (page < 1 || page > maxPage) return new PageResult<>(page, maxPage, null, results);
 
         var header = generateHeader(generatorInfo, results, page);
         var footer = generateFooter(generatorInfo, results, page);

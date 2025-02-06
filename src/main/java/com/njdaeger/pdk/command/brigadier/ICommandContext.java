@@ -3,13 +3,14 @@ package com.njdaeger.pdk.command.brigadier;
 import com.njdaeger.pdk.command.exception.PDKCommandException;
 import com.njdaeger.pdk.command.exception.PermissionDeniedException;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,34 +23,34 @@ import java.util.stream.Stream;
  */
 public interface ICommandContext {
 
-//    /**
-//     * Check if a flag has been used in this command execution.
-//     * @param flag The flag to check for
-//     * @return True if the flag was used, false otherwise
-//     */
-//    @Contract(pure = true, value = "null -> fail")
-//    boolean hasFlag(String flag);
-//
-//    /**
-//     * Get the value of a flag from this command execution
-//     * @param flag The flag to get the value of
-//     * @param <T> The type of the flag
-//     * @return The value of the flag, null if no flag exists.
-//     */
-//    @Nullable
-//    @Contract(pure = true, value = "null -> fail")
-//    <T> T getFlag(String flag);
-//
-//    /**
-//     * Get the value of a flag from this command execution or return a default value if the flag does not exist
-//     * @param flag The flag to get the value of
-//     * @param defaultValue The default value to return if the flag does not exist
-//     * @param <T> The type of the flag
-//     * @return The value of the flag, or the default value if the flag does not exist
-//     */
-//    @Nullable
-//    @Contract(pure = true, value = "null, _ -> fail;  _, null -> null")
-//    <T> T getFlagOrDefault(String flag, T defaultValue);
+    /**
+     * Check if a flag has been used in this command execution.
+     * @param flag The flag to check for
+     * @return True if the flag was used, false otherwise
+     */
+    @Contract(pure = true, value = "null -> fail")
+    boolean hasFlag(String flag);
+
+    /**
+     * Get the value of a flag from this command execution
+     * @param flag The flag to get the value of
+     * @param <T> The type of the flag
+     * @return The value of the flag, null if no flag exists.
+     */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail")
+    <T> T getFlag(String flag);
+
+    /**
+     * Get the value of a flag from this command execution or return a default value if the flag does not exist
+     * @param flag The flag to get the value of
+     * @param defaultValue The default value to return if the flag does not exist
+     * @param <T> The type of the flag
+     * @return The value of the flag, or the default value if the flag does not exist
+     */
+    @Nullable
+    @Contract(pure = true, value = "null, _ -> fail;  _, null -> null")
+    <T> T getFlag(String flag, T defaultValue);
 
     /**
      * Get the alias of the command that was executed
@@ -244,31 +245,24 @@ public interface ICommandContext {
      * @param argName The name of the argument
      * @return True if the command context has the argument, false otherwise
      */
-    default boolean hasTyped(String argName) {
-        return getTyped(argName) != null;
+    boolean hasTyped(String argName);
+
+    /**
+     * Check if the command context has a typed argument of the given type
+     * @param argName The name of the argument
+     * @param type The type of the argument to check for
+     * @return True if the command context has the argument of the given name and type, false otherwise
+     */
+    default boolean hasTypedAs(String argName, Class<?> type) {
+        return hasTyped(argName) && getTyped(argName, type) != null;
     }
 
     /**
-     * Get a typed argument from the command context as a string.
+     * Get a typed argument from the command context
      * @param argName The name of the argument
      * @return The argument value
      */
-    @Nullable
-    @Contract(pure = true, value = "null -> fail")
-    String getTyped(String argName);
-
-    /**
-     * Get a typed argument from the command context as a string or return a default value if the argument does not exist
-     * @param argName The name of the argument
-     * @param defVal The default value to return if the argument does not exist
-     * @return The argument value or the default value if the argument does not exist
-     */
-    @Nullable
-    @Contract(pure = true, value = "null, _ -> fail; _, null -> null")
-    default <T> T getTyped(String argName, T defVal) {
-        if (!hasTyped(argName)) return defVal;
-        return getTyped(argName, (Class<T>)defVal.getClass());
-    }
+    Object getTyped(String argName);
 
     /**
      * Get aa typed argument from the command context
@@ -282,6 +276,19 @@ public interface ICommandContext {
     <T> T getTyped(String argName, Class<T> type);
 
     /**
+     * Get a typed argument from the command context as a string or return a default value if the argument does not exist
+     * @param argName The name of the argument
+     * @param defVal The default value to return if the argument does not exist
+     * @return The argument value or the default value if the argument does not exist
+     */
+    @Nullable
+    @Contract(pure = true, value = "null, _ -> fail; _, !null -> _")
+    default <T> T getTyped(String argName, T defVal) {
+        if (!hasTyped(argName)) return defVal;
+        return (T) getTyped(argName, defVal.getClass());
+    }
+
+    /**
      * Get a typed argument from the command context or return a default value if the argument does not exist
      * @param argName The name of the argument
      * @param type The type of the argument
@@ -291,9 +298,10 @@ public interface ICommandContext {
      */
     @Nullable
     @Contract(pure = true, value = "null, _, _ -> fail; _, null, _ -> fail; _, _, null -> null")
-    default <T> T getTypedOrDefault(String argName, Class<T> type, T defVal) {
+    default <T> T getTyped(String argName, Class<T> type, T defVal) {
         if (!hasTyped(argName)) return defVal;
-        return getTyped(argName, type);
+        var result = getTyped(argName, type);
+        return result == null ? defVal : result;
     }
 
     /**
@@ -453,7 +461,7 @@ public interface ICommandContext {
      */
     @Contract(pure = true , value = "-> fail")
     default void noPermission() throws PDKCommandException {
-        throw new PermissionDeniedException("You do not have permission to run this command.");
+        throw new PermissionDeniedException();
     }
 
     /**
@@ -466,10 +474,28 @@ public interface ICommandContext {
     }
 
     /**
+     * @param message The message to send to the sender
+     * @throws PDKCommandException due to a lack of permissions
+     */
+    @Contract(pure = true , value = "_ -> fail")
+    default void noPermission(TextComponent message) throws PDKCommandException {
+        throw new PermissionDeniedException(message);
+    }
+
+    /**
      * @throws PDKCommandException due to an error
      */
     @Contract(pure = true , value = "_ -> fail")
     default void error(String message) throws PDKCommandException {
+        throw new PDKCommandException(Component.text(message, NamedTextColor.RED));
+    }
+
+    /**
+     * @param message The message to send to the sender
+     * @throws PDKCommandException due to an error
+     */
+    @Contract(pure = true , value = "_ -> fail")
+    default void error(TextComponent message) throws PDKCommandException {
         throw new PDKCommandException(message);
     }
 

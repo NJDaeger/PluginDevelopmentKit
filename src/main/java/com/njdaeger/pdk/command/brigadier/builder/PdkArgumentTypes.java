@@ -1,8 +1,11 @@
-package com.njdaeger.pdk.command.brigadier.arguments.types;
+package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.Message;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.arguments.GreedyStringArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.IntegerArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.QuotedStringArgument;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,6 +67,14 @@ public class PdkArgumentTypes {
 
     public static IntegerArgument integer(int min, int max, Function<Integer, Message> outOfBoundsMessage, Message defaultTooltipMessage) {
         return new IntegerArgument(min, max, outOfBoundsMessage, defaultTooltipMessage);
+    }
+
+    public static IntegerArgument integer(int min, Message defaultTooltipMessage) {
+        return new IntegerArgument(min, Integer.MAX_VALUE, i -> new LiteralMessage("Number must be greater than " + min), defaultTooltipMessage);
+    }
+
+    public static IntegerArgument integer(int min, int max) {
+        return new IntegerArgument(min, max, i -> new LiteralMessage("Number must be between " + min + " and " + max), () -> "A number.");
     }
 
     public static IntegerArgument integer(Message defaultTooltipMessage) {

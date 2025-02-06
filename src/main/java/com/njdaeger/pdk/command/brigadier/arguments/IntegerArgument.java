@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments.types;
+package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
-import com.njdaeger.pdk.command.brigadier.impl.ExecutionHelpers;
+import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class IntegerArgument extends PdkArgumentType<Integer, Integer> {
+public class IntegerArgument extends BasePdkArgumentType<Integer, Integer> {
 
     private final int min;
     private final int max;
@@ -88,17 +88,21 @@ public class IntegerArgument extends PdkArgumentType<Integer, Integer> {
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(ExecutionHelpers.createCommandContext((CommandContext<CommandSourceStack>) context));
+        var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
+        var current = builder.getRemaining();
+        var completingAt = builder.getStart() + ((current.contains("-") && min < 0) ? current.lastIndexOf("-") + 1 : 0);
+        var newBuilder = builder.createOffset(completingAt);
+
         if (suggestions.isEmpty()) {
-            var current = builder.getRemaining();
             int parsed;
             try {
                 parsed = Integer.parseInt(current);
             } catch (NumberFormatException e) {
                 parsed = 0;
             }
-            IntStream.rangeClosed(parsed * 10, parsed * 10 + 10).mapToObj(String::valueOf).forEach(builder::suggest);
-            return builder.buildFuture();
+            if (parsed < 0) parsed *= -1;
+            IntStream.rangeClosed(parsed * 10, parsed * 10 + 10).mapToObj(String::valueOf).forEach(newBuilder::suggest);
+            return newBuilder.buildFuture();
         }
         suggestions.forEach((suggestion, message) -> builder.suggest(suggestion.toString(), message));
         return builder.buildFuture();

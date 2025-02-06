@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments;
+package com.njdaeger.pdk.command.brigadier.flags;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -7,19 +7,18 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.njdaeger.pdk.command.brigadier.ICommandFlag;
-import com.njdaeger.pdk.command.brigadier.arguments.types.PdkArgumentType;
+import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class FlagFieldArgumentType extends PdkArgumentType<FlagMap, String> {
+public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> {
 
-    private final List<ICommandFlag<?>> flags;
+    private final List<IPdkCommandFlag<?>> flags;
 
-    public FlagFieldArgumentType(List<ICommandFlag<?>> flags) {
+    public FlagFieldArgumentType(List<IPdkCommandFlag<?>> flags) {
         this.flags = flags;
     }
 
@@ -82,7 +81,7 @@ public class FlagFieldArgumentType extends PdkArgumentType<FlagMap, String> {
         return StringArgumentType.greedyString();
     }
 
-    private ICommandFlag<?> getFlag(String flagName) {
+    private IPdkCommandFlag<?> getFlag(String flagName) {
         flagName = flagName.startsWith("-") ? flagName.substring(1) : flagName;
         for (var flag : flags) {
             if (flag.getName().equalsIgnoreCase(flagName)) {
@@ -92,7 +91,7 @@ public class FlagFieldArgumentType extends PdkArgumentType<FlagMap, String> {
         return null;
     }
 
-    private <S> List<ICommandFlag<?>> getUnusedFlags(CommandContext<S> context) {
+    private <S> List<IPdkCommandFlag<?>> getUnusedFlags(CommandContext<S> context) {
         var splitArgs = context.getInput().split(" ");
         var unusedFlags = new ArrayList<>(flags);
         for (var arg : splitArgs) {

@@ -1,7 +1,8 @@
-package com.njdaeger.pdk.command.brigadier;
+package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 
 import java.util.List;

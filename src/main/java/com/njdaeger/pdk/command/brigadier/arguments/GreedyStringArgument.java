@@ -1,25 +1,18 @@
-package com.njdaeger.pdk.command.brigadier.arguments.types;
+package com.njdaeger.pdk.command.brigadier.arguments;
 
-import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
-import com.njdaeger.pdk.command.brigadier.impl.ExecutionHelpers;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class GreedyStringArgument extends PdkArgumentType<String, String> {
+public class GreedyStringArgument extends BasePdkArgumentType<String, String> {
 
     private final Message defaultTooltipMessage;
     private final Function<ICommandContext, Map<String, Message>> suggestions;

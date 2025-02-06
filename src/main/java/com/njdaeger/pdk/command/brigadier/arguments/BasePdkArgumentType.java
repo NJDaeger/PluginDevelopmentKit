@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments.types;
+package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.Message;
@@ -7,8 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
-import com.njdaeger.pdk.command.brigadier.IPdkArgumentType;
-import com.njdaeger.pdk.command.brigadier.impl.ExecutionHelpers;
+import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public abstract class PdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumentType<CUSTOM, NATIVE> {
+public abstract class BasePdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumentType<CUSTOM, NATIVE> {
 
     @Override
     public List<CUSTOM> listBasicSuggestions(ICommandContext commandContext) {
@@ -36,7 +35,7 @@ public abstract class PdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumentTyp
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(ExecutionHelpers.createCommandContext((CommandContext<CommandSourceStack>) context));
+        var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
         suggestions.forEach((suggestion, message) -> builder.suggest(convertToNative(suggestion).toString(), message));
         return builder.buildFuture();
     }
