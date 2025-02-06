@@ -245,6 +245,7 @@ public interface ICommandContext {
      * @param argName The name of the argument
      * @return True if the command context has the argument, false otherwise
      */
+    @Contract(pure = true, value = "null -> fail")
     boolean hasTyped(String argName);
 
     /**
@@ -253,15 +254,28 @@ public interface ICommandContext {
      * @param type The type of the argument to check for
      * @return True if the command context has the argument of the given name and type, false otherwise
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Contract(pure = true, value = "null, _ -> fail; _, null -> fail")
     default boolean hasTypedAs(String argName, Class<?> type) {
-        return hasTyped(argName) && getTyped(argName, type) != null;
+        if (argName == null) throw new IllegalArgumentException("Argument name cannot be null.");
+        if (type == null) throw new IllegalArgumentException("Type cannot be null.");
+        if (hasTyped(argName)) {
+            try {
+                getTyped(argName, type);
+                return true;
+            } catch (Exception ignore) {}
+        }
+        return false;
     }
 
     /**
      * Get a typed argument from the command context
+     *
      * @param argName The name of the argument
      * @return The argument value
      */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail")
     Object getTyped(String argName);
 
     /**
@@ -271,7 +285,7 @@ public interface ICommandContext {
      * @param <T> The type of the argument
      * @return The argument value
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true, value = "null, _ -> fail; _, null -> fail")
     <T> T getTyped(String argName, Class<T> type);
 
@@ -281,10 +295,12 @@ public interface ICommandContext {
      * @param defVal The default value to return if the argument does not exist
      * @return The argument value or the default value if the argument does not exist
      */
-    @Nullable
-    @Contract(pure = true, value = "null, _ -> fail; _, !null -> _")
+    @NotNull
+    @Contract(pure = true, value = "null, _ -> fail; _, null -> fail")
     default <T> T getTyped(String argName, T defVal) {
-        if (!hasTyped(argName)) return defVal;
+        if (argName == null) throw new IllegalArgumentException("Argument name cannot be null.");
+        if (defVal == null) throw new IllegalArgumentException("Default value cannot be null.");
+        if (!hasTypedAs(argName, defVal.getClass())) return defVal;
         return (T) getTyped(argName, defVal.getClass());
     }
 
@@ -296,12 +312,13 @@ public interface ICommandContext {
      * @param <T> The type of the argument
      * @return The argument value or the default value if the argument does not exist
      */
-    @Nullable
-    @Contract(pure = true, value = "null, _, _ -> fail; _, null, _ -> fail; _, _, null -> null")
+    @Nullable("If the default value is null")
+    @Contract(pure = true, value = "null, _, _ -> fail; _, null, _ -> fail;")
     default <T> T getTyped(String argName, Class<T> type, T defVal) {
-        if (!hasTyped(argName)) return defVal;
-        var result = getTyped(argName, type);
-        return result == null ? defVal : result;
+        if (argName == null) throw new IllegalArgumentException("Argument name cannot be null.");
+        if (type == null) throw new IllegalArgumentException("Type cannot be null.");
+        if (!hasTypedAs(argName, type)) return defVal;
+        return getTyped(argName, type);
     }
 
     /**
