@@ -2,6 +2,7 @@ package com.njdaeger.pdk.utils.text.pager.components;
 
 import com.njdaeger.pdk.utils.TriFunction;
 import com.njdaeger.pdk.utils.text.pager.ChatPaginator;
+import com.njdaeger.pdk.utils.text.pager.PageItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -9,7 +10,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 
 import java.util.List;
 
-public class PageNavigationComponent<T, B> implements IComponent<T, B> {
+public class PageNavigationComponent<T extends PageItem<B>, B> implements IComponent<T, B> {
 
     private final TriFunction<B, List<T>, Integer, String> nextPage;
     private final TriFunction<B, List<T>, Integer, String> previousPage;

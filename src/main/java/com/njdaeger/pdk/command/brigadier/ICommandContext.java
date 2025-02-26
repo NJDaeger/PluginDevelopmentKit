@@ -1,5 +1,6 @@
 package com.njdaeger.pdk.command.brigadier;
 
+import com.njdaeger.pdk.command.exception.CommandSenderTypeException;
 import com.njdaeger.pdk.command.exception.PDKCommandException;
 import com.njdaeger.pdk.command.exception.PermissionDeniedException;
 import net.kyori.adventure.text.Component;
@@ -384,10 +385,11 @@ public interface ICommandContext {
      * Get the sender as a player
      * @return The sender as a player
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true)
-    default Player asPlayer() {
-        return isPlayer() ? (Player)getSender() : null;
+    default Player asPlayer() throws PDKCommandException {
+        if (isPlayer()) return (Player)getSender();
+        else throw new CommandSenderTypeException(getSender(), Player.class);
     }
 
     /**
@@ -402,10 +404,11 @@ public interface ICommandContext {
      * Get the sender as a block sender
      * @return The sender as a block sender
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true)
-    default BlockCommandSender asBlock() {
-        return isBlock() ? (BlockCommandSender)getSender() : null;
+    default BlockCommandSender asBlock() throws PDKCommandException {
+        if (isBlock()) return (BlockCommandSender)getSender();
+        else throw new CommandSenderTypeException(getSender(), BlockCommandSender.class);
     }
 
     /**
@@ -420,10 +423,11 @@ public interface ICommandContext {
      * Get the sender as an entity
      * @return The sender as an entity
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true)
-    default Entity asEntity() {
-        return isEntity() ? (Entity)getSender() : null;
+    default Entity asEntity() throws PDKCommandException {
+        if (isEntity()) return (Entity)getSender();
+        else throw new CommandSenderTypeException(getSender(), Entity.class);
     }
 
     /**
@@ -444,11 +448,12 @@ public interface ICommandContext {
      * @param <S> The type to get the sender as
      * @return The sender as the given type
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true, value = "null -> fail; !null -> _")
-    default <S extends CommandSender> S as(Class<S> type) {
+    default <S extends CommandSender> S as(Class<S> type) throws PDKCommandException {
         if (type == null) throw new IllegalArgumentException("Type cannot be null.");
-        return is(type) ? type.cast(getSender()) : null;
+        if (is(type)) return type.cast(getSender());
+        else throw new CommandSenderTypeException(getSender(), type);
     }
 
     /**
@@ -464,13 +469,13 @@ public interface ICommandContext {
      * @return The location of the sender
      * @throws PDKCommandException If the sender is not locatable
      */
-    @Nullable
+    @NotNull
     @Contract(pure = true)
     default Location getLocation() throws PDKCommandException {
         if (isPlayer()) return asPlayer().getLocation();
         if (isBlock()) return asBlock().getBlock().getLocation();
         if (isEntity()) return asEntity().getLocation();
-        return null;
+        throw new CommandSenderTypeException("This command requires a command sender that is either a Player, Block, or Entity so a location can be determined.");
     }
 
     /**

@@ -3,44 +3,40 @@ package com.njdaeger.pdk.utils.text.pager;
 import com.njdaeger.pdk.utils.text.TextUtils;
 import com.njdaeger.pdk.utils.text.pager.components.IComponent;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.Color;
 import org.bukkit.map.MinecraftFont;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 
-public class ChatPaginator<T, B> {
+public class ChatPaginator<T extends PageItem<B>, B> {
 
     public static final int EQUAL_SIGN_WIDTH = MinecraftFont.Font.getWidth("=");
-    private static final int EQUAL_SIGN_COUNT = 22;
-
-    private final BiFunction<T, B, TextComponent> lineGenerator;
 
     private TextColor grayColor = TextColor.color(170, 170, 170);
     private TextColor grayedOutColor = TextColor.color(179, 163, 179);
     private TextColor highlightColor = TextColor.color(255, 85, 255);
 
+    private LineWrappingMode lineWrappingMode = LineWrappingMode.FIXED_ITEMS_WRAP;
+    private int lineWidthInPixels = 316;
+    private int equalSignCount = 27;
+
     private final Map<ComponentPosition, IComponent<T, B>> components;
 
-    public ChatPaginator(BiFunction<T, B, TextComponent> lineGenerator) {
-        this.lineGenerator = lineGenerator;
+    public ChatPaginator() {
         this.components = new HashMap<>();
     }
 
     /**
      * Creates a new ChatPaginatorBuilder with the given line generator.
-     * @param lineGenerator The line generator to use.
      * @param <T> The type of object to generate lines for.
      * @param <B> The type of object to use as generator info.
      * @return A new ChatPaginatorBuilder.
      */
-    public static <T, B> ChatPaginatorBuilder<T, B> builder(BiFunction<T, B, TextComponent> lineGenerator) {
-        return new ChatPaginatorBuilder<>(lineGenerator);
+    public static <T extends PageItem<B>, B> ChatPaginatorBuilder<T, B> builder() {
+        return new ChatPaginatorBuilder<>();
     }
 
     /**
@@ -77,14 +73,12 @@ public class ChatPaginator<T, B> {
         var section = component.getText(generatorInfo, this, results, page);
         if (section == null) return null;
         var raw = section.content();
-        var text = component.getText(generatorInfo, this, results, page);
-        if (!raw.endsWith(" ")) text = (TextComponent) text.appendSpace();
+        var text = component.getText(generatorInfo, this, results, page).toBuilder();
+        if (!raw.endsWith(" ")) text.appendSpace();
         if (!raw.startsWith(" ")) {
-            TextComponent finalText = text;
-            return (info1, pager1, results1, currentPage1) -> Component.space().append(finalText);
+            return (info1, pager1, results1, currentPage1) -> Component.space().append(text);
         }
-        TextComponent finalText1 = text;
-        return (info1, pager1, results1, currentPage1) -> finalText1;
+        return (info1, pager1, results1, currentPage1) -> text.build();
     }
 
     /**
@@ -110,8 +104,36 @@ public class ChatPaginator<T, B> {
      */
     private TextComponent.Builder generateBody(B generatorInfo, List<T> results, int page) {
         var body = Component.text();
-        var resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
-        resultsForPage.forEach(result -> body.appendNewline().append(lineGenerator.apply(result, generatorInfo)));
+        switch (lineWrappingMode) {
+            case FIXED_ITEMS_WRAP:
+                var resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                resultsForPage.forEach(result -> body.appendNewline().append(result.getItemText(this, generatorInfo)));
+                break;
+            case ELLIPSIS:
+                resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                resultsForPage.forEach(result -> {
+                    var line = result.getItemText(this, generatorInfo);
+                    var width = TextUtils.getMinecraftPixelWidth(line);
+                    if (width > lineWidthInPixels) {
+                        var hover = result.getEllipsisHoverText(this, generatorInfo);
+                        line = TextUtils.truncateComponentToPixelLength(line, lineWidthInPixels - 6).append(Component.text("...", highlightColor).hoverEvent(hover));
+                    }
+                    body.appendNewline().append(line);
+                });
+                break;
+            case TRUNCATE:
+                resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                resultsForPage.forEach(result -> {
+                    var line = result.getItemText(this, generatorInfo);
+                    var width = TextUtils.getMinecraftPixelWidth(line);
+                    if (width > lineWidthInPixels) line = TextUtils.truncateComponentToPixelLength(line, lineWidthInPixels);
+                    body.appendNewline().append(line);
+                });
+                break;
+            default:
+                throw new IllegalStateException("Unsupported wrapping mode: " + lineWrappingMode);
+        }
+
         body.appendNewline();
         return body;
     }
@@ -122,8 +144,8 @@ public class ChatPaginator<T, B> {
     private TextComponent.Builder generateHeader(B generatorInfo, List<T> results, int page) {
 
         //set both sides to EQUAL_SIGN_COUNT, the outermost = signs are always manually added
-        int leftEqualSignCount = EQUAL_SIGN_COUNT;
-        int rightEqualSignCount = EQUAL_SIGN_COUNT;
+        int leftEqualSignCount = equalSignCount;
+        int rightEqualSignCount = equalSignCount;
         var header = Component.text();
         header.append(Component.text("=", grayColor)); //left equal sign
 
@@ -170,8 +192,8 @@ public class ChatPaginator<T, B> {
      */
     private TextComponent.Builder generateFooter(B generatorInfo, List<T> results, int page) {
         //set both sides to EQUAL_SIGN_COUNT, the outermost = signs are always manually added
-        int leftEqualSignCount = EQUAL_SIGN_COUNT;
-        int rightEqualSignCount = EQUAL_SIGN_COUNT;
+        int leftEqualSignCount = equalSignCount;
+        int rightEqualSignCount = equalSignCount;
         var footer = Component.text();
         footer.append(Component.text("=", grayColor)); //left equal sign
 
@@ -260,6 +282,54 @@ public class ChatPaginator<T, B> {
      */
     public void setGrayColor(TextColor grayColor) {
         this.grayColor = grayColor;
+    }
+
+    /**
+     * Get the line wrapping mode for this paginator
+     * @return The line wrapping mode for this paginator
+     */
+    public LineWrappingMode getLineWrappingMode() {
+        return lineWrappingMode;
+    }
+
+    /**
+     * Set the line wrapping mode for this paginator
+     * @param lineWrappingMode The line wrapping mode for this paginator
+     */
+    public void setLineWrappingMode(LineWrappingMode lineWrappingMode) {
+        this.lineWrappingMode = lineWrappingMode;
+    }
+
+    /**
+     * Get the amount of equal signs one HALF of the header will be allocated
+     * @return The amount of equal signs one HALF of the header will be allocated
+     */
+    public int getEqualSignCount() {
+        return equalSignCount;
+    }
+
+    /**
+     * Set the amount of equal signs one HALF of the header will be allocated
+     * @param equalSignCount The amount of equal signs one HALF of the header will be allocated
+     */
+    public void setEqualSignCount(int equalSignCount) {
+        this.equalSignCount = equalSignCount;
+    }
+
+    /**
+     * Get the width of the chat in pixels
+     * @return The width of the chat in pixels
+     */
+    public int getChatWidthInPixels() {
+        return lineWidthInPixels;
+    }
+
+    /**
+     * Set the width of the chat in pixels
+     * @param lineWidthInPixels The width of the chat in pixels
+     */
+    public void setChatWidthInPixels(int lineWidthInPixels) {
+        this.lineWidthInPixels = lineWidthInPixels;
     }
 
     /**

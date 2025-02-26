@@ -1,6 +1,7 @@
 package com.njdaeger.pdk.utils.text.pager.components;
 
 import com.njdaeger.pdk.utils.text.pager.ChatPaginator;
+import com.njdaeger.pdk.utils.text.pager.PageItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -10,7 +11,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-public class ResultCountComponent<T, B> implements IComponent<T, B> {
+public class ResultCountComponent<T extends PageItem<B>, B> implements IComponent<T, B> {
 
     private final int padding;
     private final boolean compact;

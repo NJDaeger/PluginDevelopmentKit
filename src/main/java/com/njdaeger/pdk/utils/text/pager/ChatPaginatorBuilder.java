@@ -6,14 +6,12 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
-import java.util.function.BiFunction;
-
-public class ChatPaginatorBuilder<T, B> {
+public class ChatPaginatorBuilder<T extends PageItem<B>, B> {
 
     private final ChatPaginator<T, B> paginator;
 
-    ChatPaginatorBuilder(BiFunction<T, B, TextComponent> lineGenerator) {
-        this.paginator = new ChatPaginator<>(lineGenerator);
+    ChatPaginatorBuilder() {
+        this.paginator = new ChatPaginator<>();
     }
 
     /**
@@ -152,6 +150,37 @@ public class ChatPaginatorBuilder<T, B> {
         paginator.setGrayColor(TextColor.color(red, green, blue));
         return this;
     }
+
+    /**
+     * Set the line wrapping mode for this paginator
+     * @param lineWrappingMode The line wrapping mode for this paginator
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setLineWrappingMode(LineWrappingMode lineWrappingMode) {
+        paginator.setLineWrappingMode(lineWrappingMode);
+        return this;
+    }
+
+    /**
+     * Set the number of equal signs to use in the header and footer. This is split per side. 27 signs is the default per side of the header and footer. So, total length is 44.
+     * @param equalSignCount The number of equal signs to use in the left/right side of the header and footer.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setEqualSignCount(int equalSignCount) {
+        paginator.setEqualSignCount(equalSignCount);
+        return this;
+    }
+
+    /**
+     * Set the chat width in pixels. This is used to determine how many characters can fit on a single line in chat. Default width is 320 pixels.
+     * @param chatWidth The chat width in pixels.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setChatWidthInPixels(int chatWidth) {
+        paginator.setChatWidthInPixels(chatWidth);
+        return this;
+    }
+
 
     /**
      * The default color for the page number in the header or footer.
