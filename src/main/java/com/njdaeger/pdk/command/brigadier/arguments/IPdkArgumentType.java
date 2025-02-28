@@ -1,14 +1,16 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
-public interface IPdkArgumentType<CUSTOM, NATIVE> extends CustomArgumentType.Converted<CUSTOM, NATIVE> {
+public interface IPdkArgumentType<CUSTOM, NATIVE> extends CustomArgumentType<CUSTOM, NATIVE> {
 
     /**
      * Returns a list of basic suggestions. All tooltips will be the default tooltip message provided by {@link #getDefaultTooltipMessage()}.
@@ -39,10 +41,16 @@ public interface IPdkArgumentType<CUSTOM, NATIVE> extends CustomArgumentType.Con
 
     /**
      * Converts the native argument type to the custom argument type for command execution.
+     *
      * @param nativeType The native argument type.
+     * @param reader The stringreader used to parse the command.
      * @return The custom argument type.
      * @throws CommandSyntaxException If the conversion from the native to the custom fails.
      */
-    CUSTOM convertToCustom(NATIVE nativeType) throws CommandSyntaxException;
+    CUSTOM convertToCustom(NATIVE nativeType, StringReader reader) throws CommandSyntaxException;
 
+    @Override
+    default @NotNull CUSTOM parse(@NotNull StringReader reader) throws CommandSyntaxException {
+        return convertToCustom(getNativeType().parse(reader), reader);
+    }
 }

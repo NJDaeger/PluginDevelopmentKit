@@ -1,10 +1,12 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IntegerArgument extends BasePdkArgumentType<Integer, Integer> {
+
+    private static final DynamicCommandExceptionType INTEGER_OUT_OF_BOUNDS = new DynamicCommandExceptionType(o -> (Message) o);
 
     private final int min;
     private final int max;
@@ -63,9 +67,9 @@ public class IntegerArgument extends BasePdkArgumentType<Integer, Integer> {
     }
 
     @Override
-    public Integer convertToCustom(Integer nativeType) throws CommandSyntaxException {
+    public Integer convertToCustom(Integer nativeType, StringReader reader) throws CommandSyntaxException {
         if (nativeType < min || nativeType > max) {
-            throw new CommandSyntaxException(null, outOfBoundsMessage.apply(nativeType));
+            throw INTEGER_OUT_OF_BOUNDS.createWithContext(reader, outOfBoundsMessage.apply(nativeType));
         }
         return nativeType;
     }

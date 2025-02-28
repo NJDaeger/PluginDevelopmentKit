@@ -3,7 +3,6 @@ package com.njdaeger.pdk.command.brigadier.arguments;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
@@ -43,10 +42,5 @@ public abstract class BasePdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumen
     @Override
     public Message getDefaultTooltipMessage() {
         return new LiteralMessage("");
-    }
-
-    @Override
-    public final @NotNull CUSTOM convert(@NotNull NATIVE nativeType) throws CommandSyntaxException {
-        return convertToCustom(nativeType);
     }
 }

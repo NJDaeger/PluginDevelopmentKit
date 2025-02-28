@@ -1,10 +1,12 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, String>{
+
+    private static final DynamicCommandExceptionType ENUM_ENTRY_NOT_FOUND = new DynamicCommandExceptionType(o -> () -> "Enum entry " + o.toString() + " not found");
 
     private final Class<T> enumClass;
     private final Message defaultTooltipMessage;
@@ -55,11 +59,11 @@ public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, Stri
     }
 
     @Override
-    public T convertToCustom(String nativeType) throws CommandSyntaxException {
+    public T convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
         try {
             return Enum.valueOf(enumClass, nativeType);
         } catch (IllegalArgumentException e) {
-            throw new CommandSyntaxException(null, () -> "Invalid enum value: " + nativeType);
+            throw ENUM_ENTRY_NOT_FOUND.createWithContext(reader, nativeType);
         }
     }
 

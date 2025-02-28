@@ -1,6 +1,7 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -44,7 +45,7 @@ public class GreedyStringArgument extends BasePdkArgumentType<String, String> {
     }
 
     @Override
-    public String convertToCustom(String nativeType) throws CommandSyntaxException {
+    public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
         return nativeType;
     }
 

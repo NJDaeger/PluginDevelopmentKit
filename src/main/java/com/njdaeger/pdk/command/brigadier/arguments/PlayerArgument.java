@@ -1,6 +1,7 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -65,10 +66,11 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
     }
 
     @Override
-    public Player convertToCustom(String nativeType) throws CommandSyntaxException {
+    public Player convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+        System.out.println("Converting to custom: " + nativeType);
         var player = Bukkit.getPlayer(nativeType);
         if (player == null) {
-            throw PLAYER_NOT_FOUND.create(nativeType);
+            throw PLAYER_NOT_FOUND.createWithContext(reader, nativeType);
         }
         return player;
     }

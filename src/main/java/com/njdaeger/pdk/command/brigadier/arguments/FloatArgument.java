@@ -1,10 +1,12 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class FloatArgument extends BasePdkArgumentType<Float, Float> {
+
+    private static final DynamicCommandExceptionType FLOAT_OUT_OF_BOUNDS = new DynamicCommandExceptionType(o -> (Message) o);
 
     private final float min;
     private final float max;
@@ -58,14 +62,19 @@ public class FloatArgument extends BasePdkArgumentType<Float, Float> {
     }
 
     @Override
+    public Message getDefaultTooltipMessage() {
+        return defaultTooltipMessage;
+    }
+
+    @Override
     public Float convertToNative(Float aFloat) {
         return aFloat;
     }
 
     @Override
-    public Float convertToCustom(Float nativeType) throws CommandSyntaxException {
+    public Float convertToCustom(Float nativeType, StringReader reader) throws CommandSyntaxException {
         if (nativeType < min || nativeType > max) {
-            throw new CommandSyntaxException(null, outOfBoundsMessage.apply(nativeType));
+            throw FLOAT_OUT_OF_BOUNDS.createWithContext(reader, outOfBoundsMessage.apply(nativeType));
         }
         return nativeType;
     }

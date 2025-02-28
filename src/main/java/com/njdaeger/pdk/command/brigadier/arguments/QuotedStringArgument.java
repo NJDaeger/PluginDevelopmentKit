@@ -1,10 +1,12 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
@@ -19,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class QuotedStringArgument extends BasePdkArgumentType<String, String> {
+
+    private static final DynamicCommandExceptionType EMPTY_STRING = new DynamicCommandExceptionType(o -> () -> "Empty strings are not allowed.");
 
     private final boolean allowEmpty;
     private final Message defaultTooltipMessage;
@@ -84,9 +88,9 @@ public class QuotedStringArgument extends BasePdkArgumentType<String, String> {
     }
 
     @Override
-    public String convertToCustom(String nativeType) throws CommandSyntaxException {
+    public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
         if (!allowEmpty && nativeType.isEmpty()) {
-            throw new CommandSyntaxException(null, () -> "Empty strings are not allowed.");
+            throw EMPTY_STRING.createWithContext(reader, nativeType);
         }
         return nativeType;
     }
