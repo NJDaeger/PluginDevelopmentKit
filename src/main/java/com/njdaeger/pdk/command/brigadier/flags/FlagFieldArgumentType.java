@@ -43,62 +43,57 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             }
         }
 
-        System.out.println("Current flag: " + currentFlag);
-        System.out.println("Current flag index: " + currentFlagIndex);
-        System.out.println("Current word: " + currentWord);
-        System.out.println("Input: '" + input + "'");
-        System.out.println("Remaining: '" + builder.getRemaining() + "'");
-
-        if (
-                currentFlag == null //if there is no current flag
-                        || currentFlag.isBooleanFlag() //or the current flag is a boolean flag
-                        || (builder.getRemaining().endsWith(" ") && currentFlagIndex < splitInput.length - 1) //or the current flag already has its value written
-                        || (currentWord.startsWith("-") && !builder.getRemaining().endsWith(" ")) //or the current word starts with a dash
+        if (currentFlag == null //if there is no current flag
+            || currentFlag.isBooleanFlag() //or the current flag is a boolean flag
+            || (builder.getRemaining().endsWith(" ") && currentFlagIndex < splitInput.length - 1) //or the current flag already has its value written
+            || (currentWord.startsWith("-") && !builder.getRemaining().endsWith(" ")) //or the current word starts with a dash
         ) {
             var unusedFlags = getUnusedFlags(context);
             var startsWithDash = currentWord.startsWith("-");
             var currentWordWithoutDash = startsWithDash ? currentWord.substring(1) : currentWord;
             var offset = builder.getStart() + builder.getRemaining().length();
+
             //attempt to find flags that start with the current word
             var possibleFlagSuggestions = unusedFlags.stream()
                     .filter(flag -> flag.getName().toLowerCase().startsWith(currentWordWithoutDash.toLowerCase()))
                     .map(flag -> Pair.of((startsWithDash ? "" : "-") + flag.getName().substring(currentWordWithoutDash.length()), flag.getTooltipAsMessage()))
                     .toList();
-            //if the current word doesnt start with a dash and the current word isnt a value for a flag, start the offset at the beginning of the current word
-            System.out.println("StartsWithDash: " + startsWithDash);
-            System.out.println("CurrentFlagIndex: " + currentFlagIndex);
-            System.out.println("SplitInput.length - 1: " + (splitInput.length - 1));
+
+            //if the current word doesnt start with a dash and the current word isnt a value for a flag,
+            //start the offset at the beginning of the current word. this is because the user is trying to
+            //tab complete a flag name and did not start with a dash
             if (!startsWithDash && splitInput.length - 1 == currentFlagIndex) offset -= currentWord.length();
 
             //if none of those, attempt to find flags that contain the current word
             if (possibleFlagSuggestions.isEmpty()) {
-                System.out.println("No flags start with the current word '" + currentWord + "'");
                 possibleFlagSuggestions = unusedFlags.stream()
                         .filter(flag -> flag.getName().toLowerCase().contains(currentWordWithoutDash.toLowerCase()))
                         .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
                         .toList();
+
                 //start the offset at the beginning of the current word
                 if (!possibleFlagSuggestions.isEmpty()) offset -= currentWord.length();
             }
             if (possibleFlagSuggestions.isEmpty()) {
-                System.out.println("No flags contain the current word '" + currentWord + "'");
                 possibleFlagSuggestions = unusedFlags.stream()
                         .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
                         .toList();
 
+                //start the offset at the beginning of the current word if the current word starts with a dash (meaning the user is trying to tab complete a flag name)
                 if (!possibleFlagSuggestions.isEmpty() && startsWithDash) offset -= currentWord.length();
             }
+
+            //if the user tries to split the name of the flag by a space, it will correct the offset
+            if (startsWithDash && input.endsWith(" ")) --offset;
+
             var newBuilder = builder.createOffset(offset);
             possibleFlagSuggestions.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
             return newBuilder.buildFuture();
         }
 
         var valueStart = input.indexOf('-' + currentFlag.getName());
-        System.out.println("Value start: " + valueStart);
         while (valueStart < input.length() && Character.isWhitespace(input.charAt(valueStart))) valueStart++;
 
-        var offset = builder.getStart() + valueStart + currentFlag.getName().length();
-        System.out.println("Offset: " + offset);
         var newBuilder = builder.createOffset(builder.getStart() + valueStart + currentWord.length() + 1);
         return currentFlag.getType().listSuggestions(context, newBuilder);
     }
