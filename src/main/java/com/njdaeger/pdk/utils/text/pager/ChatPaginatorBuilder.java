@@ -10,7 +10,7 @@ public class ChatPaginatorBuilder<T extends PageItem<B>, B> {
 
     private final ChatPaginator<T, B> paginator;
 
-    ChatPaginatorBuilder() {
+    public ChatPaginatorBuilder() {
         this.paginator = new ChatPaginator<>();
     }
 
