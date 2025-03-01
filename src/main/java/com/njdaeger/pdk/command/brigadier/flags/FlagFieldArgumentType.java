@@ -9,6 +9,7 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
+import com.njdaeger.pdk.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,8 +29,9 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var input = builder.getRemaining().trim();
+        var input = builder.getRemaining();
         var splitInput = input.split(" ");
+        var currentWord = splitInput[splitInput.length - 1];
         var currentFlagIndex = -1;
         IPdkCommandFlag<?> currentFlag = null;
         for (var i = splitInput.length - 1; i >= 0; i--) {
@@ -41,17 +43,63 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             }
         }
 
-        if (currentFlag == null || currentFlag.isBooleanFlag() || (currentFlagIndex < splitInput.length - 1 && builder.getRemaining().endsWith(" "))) {
-            var newBuilder = builder.createOffset(builder.getStart() + builder.getRemaining().length());
-            var currentWord = splitInput[splitInput.length - 1];
-            getUnusedFlags(context).forEach(flag -> newBuilder.suggest((currentWord.startsWith("-") ? "" : "-") + flag.getName(), flag.getTooltipAsMessage()));
+        System.out.println("Current flag: " + currentFlag);
+        System.out.println("Current flag index: " + currentFlagIndex);
+        System.out.println("Current word: " + currentWord);
+        System.out.println("Input: '" + input + "'");
+        System.out.println("Remaining: '" + builder.getRemaining() + "'");
+
+        if (
+                currentFlag == null //if there is no current flag
+                        || currentFlag.isBooleanFlag() //or the current flag is a boolean flag
+                        || (builder.getRemaining().endsWith(" ") && currentFlagIndex < splitInput.length - 1) //or the current flag already has its value written
+                        || (currentWord.startsWith("-") && !builder.getRemaining().endsWith(" ")) //or the current word starts with a dash
+        ) {
+            var unusedFlags = getUnusedFlags(context);
+            var startsWithDash = currentWord.startsWith("-");
+            var currentWordWithoutDash = startsWithDash ? currentWord.substring(1) : currentWord;
+            var offset = builder.getStart() + builder.getRemaining().length();
+            //attempt to find flags that start with the current word
+            var possibleFlagSuggestions = unusedFlags.stream()
+                    .filter(flag -> flag.getName().toLowerCase().startsWith(currentWordWithoutDash.toLowerCase()))
+                    .map(flag -> Pair.of((startsWithDash ? "" : "-") + flag.getName().substring(currentWordWithoutDash.length()), flag.getTooltipAsMessage()))
+                    .toList();
+            //if the current word doesnt start with a dash and the current word isnt a value for a flag, start the offset at the beginning of the current word
+            System.out.println("StartsWithDash: " + startsWithDash);
+            System.out.println("CurrentFlagIndex: " + currentFlagIndex);
+            System.out.println("SplitInput.length - 1: " + (splitInput.length - 1));
+            if (!startsWithDash && splitInput.length - 1 == currentFlagIndex) offset -= currentWord.length();
+
+            //if none of those, attempt to find flags that contain the current word
+            if (possibleFlagSuggestions.isEmpty()) {
+                System.out.println("No flags start with the current word '" + currentWord + "'");
+                possibleFlagSuggestions = unusedFlags.stream()
+                        .filter(flag -> flag.getName().toLowerCase().contains(currentWordWithoutDash.toLowerCase()))
+                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
+                        .toList();
+                //start the offset at the beginning of the current word
+                if (!possibleFlagSuggestions.isEmpty()) offset -= currentWord.length();
+            }
+            if (possibleFlagSuggestions.isEmpty()) {
+                System.out.println("No flags contain the current word '" + currentWord + "'");
+                possibleFlagSuggestions = unusedFlags.stream()
+                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
+                        .toList();
+
+                if (!possibleFlagSuggestions.isEmpty() && startsWithDash) offset -= currentWord.length();
+            }
+            var newBuilder = builder.createOffset(offset);
+            possibleFlagSuggestions.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
             return newBuilder.buildFuture();
         }
 
         var valueStart = input.indexOf('-' + currentFlag.getName());
+        System.out.println("Value start: " + valueStart);
         while (valueStart < input.length() && Character.isWhitespace(input.charAt(valueStart))) valueStart++;
 
-        var newBuilder = builder.createOffset(builder.getStart() + valueStart + currentFlag.getName().length() + 2);
+        var offset = builder.getStart() + valueStart + currentFlag.getName().length();
+        System.out.println("Offset: " + offset);
+        var newBuilder = builder.createOffset(builder.getStart() + valueStart + currentWord.length() + 1);
         return currentFlag.getType().listSuggestions(context, newBuilder);
     }
 
