@@ -22,6 +22,7 @@ public class ChatPaginator<T extends PageItem<B>, B> {
     private LineWrappingMode lineWrappingMode = LineWrappingMode.FIXED_ITEMS_WRAP;
     private int lineWidthInPixels = 316;
     private int equalSignCount = 27;
+    private int resultsPerPage = 8;
 
     private final Map<ComponentPosition, IComponent<T, B>> components;
 
@@ -89,7 +90,7 @@ public class ChatPaginator<T extends PageItem<B>, B> {
      * @return The generated page. Null if the page is out of bounds.
      */
     public PageResult<T> generatePage(B generatorInfo, List<T> results, int page) {
-        int maxPage = (int) Math.ceil(results.size() / 8.0);
+        int maxPage = (int) Math.ceil(results.size() / (double)resultsPerPage);
         if (page < 1 || page > maxPage) return new PageResult<>(page, maxPage, null, results);
 
         var header = generateHeader(generatorInfo, results, page);
@@ -106,11 +107,11 @@ public class ChatPaginator<T extends PageItem<B>, B> {
         var body = Component.text();
         switch (lineWrappingMode) {
             case FIXED_ITEMS_WRAP:
-                var resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                var resultsForPage = results.stream().skip((page - 1) * (long)resultsPerPage).limit(resultsPerPage).toList();
                 resultsForPage.forEach(result -> body.appendNewline().append(result.getItemText(this, generatorInfo)));
                 break;
             case ELLIPSIS:
-                resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                resultsForPage = results.stream().skip((page - 1) * (long)resultsPerPage).limit(resultsPerPage).toList();
                 resultsForPage.forEach(result -> {
                     var line = result.getItemText(this, generatorInfo);
                     var width = TextUtils.getMinecraftPixelWidth(line);
@@ -122,7 +123,7 @@ public class ChatPaginator<T extends PageItem<B>, B> {
                 });
                 break;
             case TRUNCATE:
-                resultsForPage = results.stream().skip((page - 1) * 8L).limit(8).toList();
+                resultsForPage = results.stream().skip((page - 1) * (long)resultsPerPage).limit(resultsPerPage).toList();
                 resultsForPage.forEach(result -> {
                     var line = result.getItemText(this, generatorInfo);
                     var width = TextUtils.getMinecraftPixelWidth(line);
@@ -330,6 +331,22 @@ public class ChatPaginator<T extends PageItem<B>, B> {
      */
     public void setChatWidthInPixels(int lineWidthInPixels) {
         this.lineWidthInPixels = lineWidthInPixels;
+    }
+
+    /**
+     * Set the amount of results per page
+     * @param resultsPerPage The amount of results per page
+     */
+    public void setResultsPerPage(int resultsPerPage) {
+        this.resultsPerPage = resultsPerPage;
+    }
+
+    /**
+     * Get the amount of results per page
+     * @return The amount of results per page
+     */
+    public int getResultsPerPage() {
+        return resultsPerPage;
     }
 
     /**

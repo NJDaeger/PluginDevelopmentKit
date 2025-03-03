@@ -181,6 +181,15 @@ public class ChatPaginatorBuilder<T extends PageItem<B>, B> {
         return this;
     }
 
+    /**
+     * Set the number of results per page. Default is 8.
+     * @param resultsPerPage The number of results per page.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setResultsPerPage(int resultsPerPage) {
+        paginator.setResultsPerPage(resultsPerPage);
+        return this;
+    }
 
     /**
      * The default color for the page number in the header or footer.
