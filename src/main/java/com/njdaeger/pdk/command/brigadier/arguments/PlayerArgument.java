@@ -70,6 +70,8 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
         System.out.println("Converting to custom: " + nativeType);
         var player = Bukkit.getPlayer(nativeType);
         if (player == null) {
+            var length = nativeType.length();
+            reader.setCursor(reader.getCursor() - length);
             throw PLAYER_NOT_FOUND.createWithContext(reader, nativeType);
         }
         return player;

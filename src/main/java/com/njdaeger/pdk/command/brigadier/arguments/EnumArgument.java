@@ -63,6 +63,8 @@ public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, Stri
         try {
             return Enum.valueOf(enumClass, nativeType);
         } catch (IllegalArgumentException e) {
+            var entryLength = nativeType.length();
+            reader.setCursor(reader.getCursor() - entryLength);
             throw ENUM_ENTRY_NOT_FOUND.createWithContext(reader, nativeType);
         }
     }

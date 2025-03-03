@@ -115,12 +115,20 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
                 var flagName = readFlagName(reader);
                 var flag = getFlag(flagName);
 
-                if (flag == null) throw UNKNOWN_FLAG.createWithContext(reader, flagName);
+                if (flag == null) {
+                    var flagNameLength = flagName.length();
+                    reader.setCursor(reader.getCursor() - flagNameLength - 1);
+                    throw UNKNOWN_FLAG.createWithContext(reader, flagName);
+                }
 
                 reader.skipWhitespace();
 
                 if (!flag.isBooleanFlag()) {
-                    if (!reader.canRead()) throw MISSING_ARGUMENT.createWithContext(reader, flag.getName());
+                    if (!reader.canRead()) {
+                        var flagNameLength = flagName.length();
+                        reader.setCursor(reader.getCursor() - flagNameLength - 1);
+                        throw MISSING_ARGUMENT.createWithContext(reader, flag.getName());
+                    }
                     var flagValue = flag.getType().parse(reader);
                     map.setFlag(flag.getName(), flagValue);
                 }
