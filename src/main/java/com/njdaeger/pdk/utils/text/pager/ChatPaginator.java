@@ -117,7 +117,8 @@ public class ChatPaginator<T extends PageItem<B>, B> {
                     var width = TextUtils.getMinecraftPixelWidth(line);
                     if (width > lineWidthInPixels) {
                         var hover = result.getEllipsisHoverText(this, generatorInfo);
-                        line = TextUtils.truncateComponentToPixelLength(line, lineWidthInPixels - 6).append(Component.text("...", highlightColor).hoverEvent(hover));
+                        line = TextUtils.truncateComponentToPixelLength(line, lineWidthInPixels - 6);
+                        line = line.append(Component.text("...", highlightColor).hoverEvent(hover));
                     }
                     body.appendNewline().append(line);
                 });

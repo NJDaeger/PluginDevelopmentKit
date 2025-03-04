@@ -69,7 +69,7 @@ public class QuotedStringArgument extends BasePdkArgumentType<String, String> {
         var completingAt = builder.getStart() + (current.contains("\"") ? current.indexOf('"') + 1 : 0);
         var newBuilder = builder.createOffset(completingAt);
 
-        if (areQuotesBalancedIgnoringEscaped(current)) return newBuilder.buildFuture();
+        if (areQuotesBalancedIgnoringEscaped(current) && !current.isBlank()) return newBuilder.buildFuture();
 
         if (quotedSuggestions.isEmpty()) {
             if (current.isBlank()) {
@@ -90,6 +90,7 @@ public class QuotedStringArgument extends BasePdkArgumentType<String, String> {
     @Override
     public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
         if (!allowEmpty && nativeType.isEmpty()) {
+            reader.setCursor(reader.getCursor() - 2);
             throw EMPTY_STRING.createWithContext(reader, nativeType);
         }
         return nativeType;

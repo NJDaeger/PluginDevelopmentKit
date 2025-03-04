@@ -32,6 +32,8 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
         var input = builder.getRemaining();
         var splitInput = input.split(" ");
         var currentWord = splitInput[splitInput.length - 1];
+        var startsWithDash = currentWord.startsWith("-");
+        var currentWordWithoutDash = startsWithDash ? currentWord.substring(1) : currentWord;
         var currentFlagIndex = -1;
         IPdkCommandFlag<?> currentFlag = null;
         for (var i = splitInput.length - 1; i >= 0; i--) {
@@ -49,8 +51,6 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             || (currentWord.startsWith("-") && !builder.getRemaining().endsWith(" ")) //or the current word starts with a dash
         ) {
             var unusedFlags = getUnusedFlags(context);
-            var startsWithDash = currentWord.startsWith("-");
-            var currentWordWithoutDash = startsWithDash ? currentWord.substring(1) : currentWord;
             var offset = builder.getStart() + builder.getRemaining().length();
 
             //attempt to find flags that start with the current word
@@ -59,10 +59,16 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
                     .map(flag -> Pair.of((startsWithDash ? "" : "-") + flag.getName().substring(currentWordWithoutDash.length()), flag.getTooltipAsMessage()))
                     .toList();
 
+            if (currentFlag != null && currentFlag.isBooleanFlag() && input.endsWith(" ")) {
+                possibleFlagSuggestions = unusedFlags.stream()
+                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
+                        .toList();
+            }
+
             //if the current word doesnt start with a dash and the current word isnt a value for a flag,
             //start the offset at the beginning of the current word. this is because the user is trying to
             //tab complete a flag name and did not start with a dash
-            if (!startsWithDash && splitInput.length - 1 == currentFlagIndex) offset -= currentWord.length();
+            if (!startsWithDash && (splitInput.length - 1) == currentFlagIndex) offset -= currentWord.length();
 
             //if none of those, attempt to find flags that contain the current word
             if (possibleFlagSuggestions.isEmpty()) {
@@ -84,17 +90,14 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             }
 
             //if the user tries to split the name of the flag by a space, it will correct the offset
-            if (startsWithDash && input.endsWith(" ")) --offset;
+            if (startsWithDash && input.endsWith(" ") && (currentFlag == null || !currentFlag.isBooleanFlag())) --offset;
 
             var newBuilder = builder.createOffset(offset);
             possibleFlagSuggestions.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
             return newBuilder.buildFuture();
         }
 
-        var valueStart = input.indexOf('-' + currentFlag.getName());
-        while (valueStart < input.length() && Character.isWhitespace(input.charAt(valueStart))) valueStart++;
-
-        var newBuilder = builder.createOffset(builder.getStart() + valueStart + currentWord.length() + 1);
+        var newBuilder = builder.createOffset(builder.getStart() + input.length());
         return currentFlag.getType().listSuggestions(context, newBuilder);
     }
 

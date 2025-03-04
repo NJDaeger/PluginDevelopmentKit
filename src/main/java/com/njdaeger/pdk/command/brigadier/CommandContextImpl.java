@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,11 @@ public class CommandContextImpl implements ICommandContext {
 
     @Override
     public @NotNull String[] getArgs() {
-        return baseContext.getInput().split(" ");
+        if (baseContext.getInput().contains(" ")) {
+            var split = baseContext.getInput().split(" ");
+            return Arrays.copyOfRange(split, 1, split.length);
+        }
+        return new String[0];
     }
 
     @Override

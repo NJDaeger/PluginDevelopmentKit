@@ -67,7 +67,6 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
 
     @Override
     public Player convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
-        System.out.println("Converting to custom: " + nativeType);
         var player = Bukkit.getPlayer(nativeType);
         if (player == null) {
             var length = nativeType.length();
