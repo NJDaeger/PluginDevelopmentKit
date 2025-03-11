@@ -29,7 +29,7 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var input = builder.getRemaining();
+        var input = builder.getRemaining().trim();
         var splitInput = input.split(" ");
         var currentWord = splitInput[splitInput.length - 1];
         var startsWithDash = currentWord.startsWith("-");

@@ -15,9 +15,10 @@ public class PdkCommandNode implements IPdkCommandNode {
 
     public PdkCommandNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, String permission, ArgumentBuilder<CommandSourceStack, ?> baseNode) {
         this.executor = executor;
-        this.baseNode = baseNode;
         this.arguments = arguments;
         this.permission = permission;
+        if (permission != null) this.baseNode = baseNode.requires(cs -> cs.getSender().hasPermission(permission));
+        else this.baseNode = baseNode;
     }
 
     @Override
