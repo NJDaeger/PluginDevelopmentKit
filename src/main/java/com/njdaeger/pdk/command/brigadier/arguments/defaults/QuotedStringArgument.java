@@ -1,10 +1,11 @@
-package com.njdaeger.pdk.command.brigadier.arguments;
+package com.njdaeger.pdk.command.brigadier.arguments.defaults;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.arguments.AbstractQuotedTypedArgument;
 
 import java.util.Collection;
 import java.util.Map;

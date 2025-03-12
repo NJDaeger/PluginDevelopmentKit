@@ -3,12 +3,12 @@ package com.njdaeger.pdk.command.brigadier.builder;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.Message;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
-import com.njdaeger.pdk.command.brigadier.arguments.EnumArgument;
-import com.njdaeger.pdk.command.brigadier.arguments.FloatArgument;
-import com.njdaeger.pdk.command.brigadier.arguments.GreedyStringArgument;
-import com.njdaeger.pdk.command.brigadier.arguments.IntegerArgument;
-import com.njdaeger.pdk.command.brigadier.arguments.PlayerArgument;
-import com.njdaeger.pdk.command.brigadier.arguments.QuotedStringArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.EnumArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.FloatArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.IntegerArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.PlayerArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.QuotedStringArgument;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;

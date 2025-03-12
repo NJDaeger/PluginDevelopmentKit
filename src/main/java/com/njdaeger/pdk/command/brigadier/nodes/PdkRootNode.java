@@ -6,7 +6,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.flags.FlagFieldArgumentType;
-import com.njdaeger.pdk.command.brigadier.arguments.GreedyStringArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import com.njdaeger.pdk.command.exception.PDKCommandException;

@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments;
+package com.njdaeger.pdk.command.brigadier.arguments.defaults;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
@@ -11,6 +11,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, String>{
+public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, String> {
 
     private static final DynamicCommandExceptionType ENUM_ENTRY_NOT_FOUND = new DynamicCommandExceptionType(o -> () -> "Enum entry " + o.toString() + " not found");
 

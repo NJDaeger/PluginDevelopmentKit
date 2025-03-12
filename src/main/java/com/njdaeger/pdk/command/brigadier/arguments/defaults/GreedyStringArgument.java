@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments;
+package com.njdaeger.pdk.command.brigadier.arguments.defaults;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

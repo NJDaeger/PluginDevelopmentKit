@@ -1,4 +1,4 @@
-package com.njdaeger.pdk.command.brigadier.arguments;
+package com.njdaeger.pdk.command.brigadier.arguments.defaults;
 
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
@@ -11,6 +11,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
