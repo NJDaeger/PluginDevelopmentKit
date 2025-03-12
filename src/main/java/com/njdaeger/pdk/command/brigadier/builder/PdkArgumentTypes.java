@@ -9,6 +9,7 @@ import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgumen
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.IntegerArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.PlayerArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.QuotedStringArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.StringArgument;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -56,6 +57,26 @@ public class PdkArgumentTypes {
 
     public static GreedyStringArgument greedyString() {
         return new GreedyStringArgument(() -> "A string of text.");
+    }
+
+    //endregion
+
+    //region StringArgument
+
+    public static StringArgument string(Function<ICommandContext, Collection<String>> suggestions, Message defaultTooltipMessage) {
+        return new StringArgument(suggestions, defaultTooltipMessage);
+    }
+
+    public static StringArgument string(Function<ICommandContext, Map<String, Message>> suggestions) {
+        return new StringArgument(suggestions);
+    }
+
+    public static StringArgument string(Message defaultTooltipMessage) {
+        return new StringArgument(defaultTooltipMessage);
+    }
+
+    public static StringArgument string() {
+        return new StringArgument(() -> "A string of text.");
     }
 
     //endregion
