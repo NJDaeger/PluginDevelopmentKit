@@ -48,7 +48,7 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
         if (currentFlag == null //if there is no current flag
             || currentFlag.isBooleanFlag() //or the current flag is a boolean flag
             || (builder.getRemaining().endsWith(" ") && currentFlagIndex < splitInput.length - 1) //or the current flag already has its value written
-            || (currentWord.startsWith("-") && !builder.getRemaining().endsWith(" ")) //or the current word starts with a dash
+            || (startsWithDash && !builder.getRemaining().endsWith(" ") && currentFlag.isBooleanFlag()) //or the current word starts with a dash
         ) {
             var unusedFlags = getUnusedFlags(context);
             var offset = builder.getStart() + builder.getRemaining().length();
@@ -59,7 +59,7 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
                     .map(flag -> Pair.of((startsWithDash ? "" : "-") + flag.getName().substring(currentWordWithoutDash.length()), flag.getTooltipAsMessage()))
                     .toList();
 
-            if (currentFlag != null && currentFlag.isBooleanFlag() && input.endsWith(" ")) {
+            if (currentFlag != null && currentFlag.isBooleanFlag() && builder.getRemaining().endsWith(" ")) {
                 possibleFlagSuggestions = unusedFlags.stream()
                         .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
                         .toList();
@@ -90,14 +90,15 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             }
 
             //if the user tries to split the name of the flag by a space, it will correct the offset
-            if (startsWithDash && input.endsWith(" ") && (currentFlag == null || !currentFlag.isBooleanFlag())) --offset;
+            if (startsWithDash && builder.getRemaining().endsWith(" ") && (currentFlag == null || !currentFlag.isBooleanFlag())) --offset;
 
             var newBuilder = builder.createOffset(offset);
             possibleFlagSuggestions.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
             return newBuilder.buildFuture();
         }
 
-        var newBuilder = builder.createOffset(builder.getStart() + input.length());
+        var flagVlaueOffset = builder.getRemaining().endsWith(" ") ? 0 : currentWord.length();
+        var newBuilder = builder.createOffset(builder.getStart() +  builder.getRemaining().length() - flagVlaueOffset);
         return currentFlag.getType().listSuggestions(context, newBuilder);
     }
 

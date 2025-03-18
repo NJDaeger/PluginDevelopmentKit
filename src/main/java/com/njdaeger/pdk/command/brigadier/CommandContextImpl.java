@@ -1,7 +1,9 @@
 package com.njdaeger.pdk.command.brigadier;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
+import com.mojang.brigadier.tree.RootCommandNode;
 import com.njdaeger.pdk.command.brigadier.flags.FlagMap;
 import com.njdaeger.pdk.command.exception.PDKCommandException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -28,6 +30,10 @@ public class CommandContextImpl implements ICommandContext {
             var args = (Map<String, ParsedArgument<CommandSourceStack, ?>>) decfield.get(baseContext);
             argumentMapping = args.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getResult()));
             flagMap = hasTypedAs("flags", FlagMap.class) ? getTyped("flags", FlagMap.class) : new FlagMap();
+            args.forEach((arg, parg) -> {
+                System.out.println("Argument: " + arg + " -> " + parg.getResult());
+                System.out.println(parg.getRange().toString());
+            });
         } catch (Exception e) {
             throw new RuntimeException("There was an error getting the arguments from the command context.", e);
         }

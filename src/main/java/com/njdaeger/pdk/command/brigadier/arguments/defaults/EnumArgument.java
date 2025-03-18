@@ -62,7 +62,7 @@ public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, Stri
     @Override
     public T convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
         try {
-            return Enum.valueOf(enumClass, nativeType);
+            return Enum.valueOf(enumClass, nativeType.toUpperCase());
         } catch (IllegalArgumentException e) {
             var entryLength = nativeType.length();
             reader.setCursor(reader.getCursor() - entryLength);

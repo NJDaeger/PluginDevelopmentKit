@@ -92,12 +92,21 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
         var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
 
+        var splitWords = builder.getRemaining().trim().split(" ");
+        var currentWord = splitWords[splitWords.length - 1];
+
         if (suggestions.isEmpty()) {
             var onlinePlayers = Bukkit.getOnlinePlayers();
-            onlinePlayers.stream().filter(playerPredicate).forEach((player) -> builder.suggest(player.getName(), () -> player.getDisplayName()));
+            onlinePlayers.stream()
+                    .filter(player -> player.getName().toLowerCase().contains(currentWord.toLowerCase()))
+                    .filter(playerPredicate)
+                    .forEach((player) -> builder.suggest(player.getName(), player::getDisplayName));
             return builder.buildFuture();
         }
-        suggestions.forEach((suggestion, message) -> builder.suggest(convertToNative(suggestion), message));
+        suggestions.entrySet().stream()
+                .filter(entry -> entry.getKey().getName().toLowerCase().contains(currentWord.toLowerCase()))
+                .filter(entry -> playerPredicate.test(entry.getKey()))
+                .forEach((entry -> builder.suggest(convertToNative(entry.getKey()), entry.getValue())));
         return builder.buildFuture();
     }
 }

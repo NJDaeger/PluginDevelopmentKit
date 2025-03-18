@@ -35,8 +35,16 @@ public abstract class BasePdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumen
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
         var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
-        suggestions.forEach((suggestion, message) -> builder.suggest(convertToNative(suggestion).toString(), message));
-        return builder.buildFuture();
+
+        var splitWords = builder.getRemaining().split(" ");
+        var currentWord = splitWords[splitWords.length - 1];
+
+        var newBuilder = builder.createOffset(builder.getStart() + builder.getRemaining().length());
+
+        suggestions.entrySet().stream()
+                .filter(entry -> currentWord.isBlank() || convertToNative(entry.getKey()).toString().toLowerCase().startsWith(currentWord.toLowerCase()))
+                .forEach(entry -> newBuilder.suggest(convertToNative(entry.getKey()).toString().substring(currentWord.length()), entry.getValue()));
+        return newBuilder.buildFuture();
     }
 
     @Override
