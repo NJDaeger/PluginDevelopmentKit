@@ -251,21 +251,71 @@ public interface ICommandContext {
     /**
      * Get the first argument passed to the command. This will return null if there are no arguments.
      * @return The first argument passed to the command. Will return null if there are no arguments.
+     * @throws IndexOutOfBoundsException if there are no arguments passed to the command.
+     */
+    @NotNull
+    @Contract(pure = true)
+    default String first() {
+        if (getArgCount() == 0) throw new IndexOutOfBoundsException("No arguments were passed to the command.");
+        return getArgs()[0];
+    }
+
+    /**
+     * Get the first argument passed to the command or return null if there are no arguments.
+     * @return The first argument passed to the command or null if there are no arguments.
      */
     @Nullable
     @Contract(pure = true)
-    default String first() {
-        return getArgCount() > 0 ? getArgs()[0] : null;
+    default String firstOrNull() {
+        if (getArgCount() == 0) return null;
+        return getArgs()[0];
+    }
+
+    /**
+     * Get the first argument passed to the command or return a default value if there are no arguments.
+     * @param defVal The default value to return if there are no arguments
+     * @return The first argument passed to the command or the default value if there are no arguments.
+     */
+    @Nullable
+    @Contract(pure = true, value = "!null -> !null")
+    default String firstOrDefault(String defVal) {
+        if (getArgCount() == 0) return defVal;
+        return getArgs()[0];
     }
 
     /**
      * Get the last argument passed to the command. This will return null if there are no arguments.
      * @return The last argument passed to the command. Will return null if there are no arguments.
+     * @throws IndexOutOfBoundsException if there are no arguments passed to the command.
+     */
+    @NotNull
+    @Contract(pure = true)
+    default String last() {
+        if (getArgCount() == 0) throw new IndexOutOfBoundsException("No arguments were passed to the command.");
+        return getArgs()[getArgCount() - 1];
+    }
+
+    /**
+     * Get the last argument passed to the command or return null if there are no arguments.
+     * @return The last argument passed to the command or null if there are no arguments.
      */
     @Nullable
     @Contract(pure = true)
-    default String last() {
-        return getArgCount() > 0 ? getArgs()[getArgCount() - 1] : null;
+    default String lastOrNull() {
+        if (getArgCount() == 0) return null;
+        return getArgs()[getArgCount() - 1];
+    }
+
+    /**
+     * Get the last argument passed to the command or return a default value if there are no arguments.
+     * @param defVal The default value to return if there are no arguments
+     * @return The last argument passed to the command or the default value if there are no arguments.
+     */
+    @Nullable
+    @Contract(pure = true, value = "!null -> !null")
+    default String lastOrDefault(String defVal) {
+        if (getArgCount() == 0) return defVal;
+        return getArgs()[getArgCount() - 1];
     }
 
     /**
