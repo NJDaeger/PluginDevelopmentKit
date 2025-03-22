@@ -81,7 +81,7 @@ public class PdkHelpTopic extends HelpTopic {
 
             for (IPdkCommandFlag<?> flag : rootNode.getFlags()) {
                 if (flag.isHidden()) continue; // Skip hidden flags
-                builder.append(Component.text("  -" + flag.getName(), NamedTextColor.DARK_AQUA))
+                builder.append(Component.text("  -" + flag.getName(), NamedTextColor.AQUA))
                         .append(Component.text(": " + flag.getTooltip(), NamedTextColor.GRAY))
                         .appendNewline();
             }
@@ -99,7 +99,7 @@ public class PdkHelpTopic extends HelpTopic {
             //order the patterns alphabetically
             usagePatterns.sort(String::compareToIgnoreCase);
             for (String pattern : usagePatterns) {
-                builder.append(Component.text("  " + baseCommand + " " + pattern, NamedTextColor.DARK_AQUA))
+                builder.append(Component.text("  " + baseCommand + " ", NamedTextColor.AQUA).append(Component.text(pattern, NamedTextColor.GRAY)))
                         .appendNewline();
             }
         }
