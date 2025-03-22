@@ -85,7 +85,7 @@ public class CommandContextImpl implements ICommandContext {
     }
 
     @Override
-    public @NotNull String getRawCommandString() {
+    public @NotNull String getRawInput() {
         return baseContext.getInput();
     }
 

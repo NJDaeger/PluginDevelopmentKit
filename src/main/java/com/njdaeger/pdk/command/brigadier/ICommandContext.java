@@ -59,7 +59,7 @@ public interface ICommandContext {
      */
     @NotNull
     default String getAlias() {
-        return getRawCommandArgs()[0];
+        return getRawArgs()[0];
     }
 
     /**
@@ -70,86 +70,38 @@ public interface ICommandContext {
     CommandSender getSender();
 
     /**
-     * Get the raw command string that was executed including all flags and the command alias
+     * Get the raw command string that was executed including all flags and the command alias.
      * @return The raw command string that was executed.
      */
     @NotNull
-    String getRawCommandString();
+    String getRawInput();
 
     /**
-     * Get the raw command arguments that were executed. This includes all flags that were passed and the command alias used.
-     * @return The raw command arguments that were executed. Will return an array with one entry if there are no arguments to the command (the alias used)
+     * Get the raw command string that was executed including all flags and the command alias split into an array of strings.
+     * @return The raw command string that was executed split into an array of strings.
      */
     @NotNull
-    default String[] getRawCommandArgs() {
-        return getRawCommandString().split(" ");
+    default String[] getRawArgs() {
+        return getRawInput().split(" ");
     }
 
     /**
      * Get the arguments that were passed to the command chunked by their parsed type. This will include flags as a single entry in this array.
+     *
+     * <p> For example, if we have defined a command like:
+     * <pre>
+     *     /testcommand literalArgument [typedNumericArgument] [typedQuotedStringArgument] anotherLiteral
+     * </pre>
+     * <p> If we pass the command in like: <code> /testcommand literalArgument 123.9 "hi there world" anotherLiteral </code>
+     * <p> The result of this method would be:
+     * <pre>
+     *     ["literalArgument", "123.9", "hi there world", "anotherLiteral"]
+     * </pre>
+     * When it comes to commands with flags, the flag will be included as a single entry in this array at the end since the flag argument is technically a single argument internally.
      * @return The arguments that were passed to the command. Will return an empty array if there are no arguments.
      */
     @NotNull
     String[] getArgs();
-
-    /**
-     * Get the number of arguments that were passed to the command. This includes multi spaced arguments as single array entries.
-     * @return The number of arguments that were passed to the command.
-     */
-    @Contract(pure = true)
-    default int getArgCount() {
-        return getArgs().length;
-    }
-
-    /**
-     * Check if the number of arguments passed to the command is equal to the given length
-     * @param length The length to check for
-     * @return True if the number of arguments passed to the command is equal to the given length, false otherwise
-     */
-    @Contract(pure = true)
-    default boolean isLength(int length) {
-        return getArgCount() == length;
-    }
-
-    /**
-     * Check if the number of arguments passed to the command is greater than the given length
-     * @param length The length to check for
-     * @return True if the number of arguments passed to the command is greater than the given length, false otherwise
-     */
-    @Contract(pure = true)
-    default boolean isGreater(int length) {
-        return getArgCount() > length;
-    }
-
-    /**
-     * Check if the number of arguments passed to the command is less than the given length
-     * @param length The length to check for
-     * @return True if the number of arguments passed to the command is less than the given length, false otherwise
-     */
-    @Contract(pure = true)
-    default boolean isLess(int length) {
-        return getArgCount() < length;
-    }
-
-    /**
-     * Check if the number of arguments passed to the command is greater than or equal to the given length
-     * @param length The length to check for
-     * @return True if the number of arguments passed to the command is greater than or equal to the given length, false otherwise
-     */
-    @Contract(pure = true)
-    default boolean isGreaterOrEqual(int length) {
-        return getArgCount() >= length;
-    }
-
-    /**
-     * Check if the number of arguments passed to the command is less than or equal to the given length
-     * @param length The length to check for
-     * @return True if the number of arguments passed to the command is less than or equal to the given length, false otherwise
-     */
-    @Contract(pure = true)
-    default boolean isLessOrEqual(int length) {
-        return getArgCount() <= length;
-    }
 
     /**
      * Check if this command execution has any arguments with it
@@ -157,6 +109,44 @@ public interface ICommandContext {
      */
     default boolean hasArgs() {
         return getArgCount() > 0;
+    }
+
+    /**
+     * Get the argument at the given index. This will throw an IndexOutOfBoundsException if the index is out of bounds.
+     * @param index The index of the argument to get
+     * @return The argument at the given index
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    @NotNull
+    @Contract(pure = true)
+    default String argAt(int index) {
+        if (!hasArgAt(index)) throw new IndexOutOfBoundsException("Index " + index + " is out of bounds for the arguments array of length " + getArgCount());
+        return getArgs()[index];
+    }
+
+    /**
+     * Get the argument at the given index or return null if the index is out of bounds.
+     * @param index The index of the argument to get
+     * @return The argument at the given index or null if the index is out of bounds
+     */
+    @Nullable
+    @Contract(pure = true)
+    default String argAtOrNull(int index) {
+        if (!hasArgAt(index)) return null;
+        return getArgs()[index];
+    }
+
+    /**
+     * Get the argument at the given index or return a default value if the index is out of bounds.
+     * @param index The index of the argument to get
+     * @param defVal The default value to return if the index is out of bounds
+     * @return The argument at the given index or the default value if the index is out of bounds
+     */
+    @Nullable
+    @Contract(pure = true, value = "_, !null -> !null")
+    default String argAtOrDefault(int index, String defVal) {
+        if (!hasArgAt(index)) return defVal;
+        return getArgs()[index];
     }
 
     /**
@@ -169,32 +159,92 @@ public interface ICommandContext {
     }
 
     /**
-     * Join all of the arguments passed to the command into a single string
-     * @return All of the arguments passed to the command joined into a single string
+     * Get the number of arguments that were passed to the command. This includes multi spaced arguments as single array entries.
+     * @return The number of arguments that were passed to the command.
      */
+    @Contract(pure = true)
+    default int getArgCount() {
+        return getArgs().length;
+    }
+
+    /**
+     * Check if the number of chunked arguments passed to the command is equal to the given length. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLength(int length) {
+        return getArgCount() == length;
+    }
+
+    /**
+     * Check if the number of chunked arguments passed to the command is greater than the given length. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is greater than the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isGreater(int length) {
+        return getArgCount() > length;
+    }
+
+    /**
+     * Check if the number of chunked arguments passed to the command is less than the given length. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is less than the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLess(int length) {
+        return getArgCount() < length;
+    }
+
+    /**
+     * Check if the number of chunked arguments passed to the command is greater than or equal to the given length. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is greater than or equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isGreaterOrEqual(int length) {
+        return getArgCount() >= length;
+    }
+
+    /**
+     * Check if the number of chunked arguments passed to the command is less than or equal to the given length. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param length The length to check for
+     * @return True if the number of arguments passed to the command is less than or equal to the given length, false otherwise
+     */
+    @Contract(pure = true)
+    default boolean isLessOrEqual(int length) {
+        return getArgCount() <= length;
+    }
+
+    /**
+     * Join the chunked arguments passed to the command into a single string. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @return All the arguments passed to the command joined into a single string
+     */
+    @NotNull
     default String joinArgs() {
         return String.join(" ", getArgs());
     }
 
     /**
-     * Join all of the arguments passed to the command into a single string starting at the given index
-     * @param start The (inclusive) index to start joining arguments at
-     * @return All of the arguments passed to the command joined into a single string starting at the given index
+     * Join the chunked arguments passed to the command into a single string starting from the given index. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param start The index to start joining from
+     * @return All the arguments passed to the command joined into a single string starting from the given index
      */
     default String joinArgs(int start) {
         return joinArgs(start, getArgCount());
     }
 
     /**
-     * Join all of the arguments passed to the command into a single string starting at the given index and finishing at the given index
-     * @param start The (inclusive) index to start joining arguments at
-     * @param finish The (exclusive) index to finish joining arguments at
-     * @return All of the arguments passed to the command joined into a single string starting at the given index and finishing at the given index
+     * Join the chunked arguments passed to the command into a single string starting from the given index and ending at the given index. (This is based on the results of {@link #getArgs()} and not the raw input)
+     * @param start The index to start joining from
+     * @param finish The index to end joining at
+     * @return All the arguments passed to the command joined into a single string starting from the given index and ending at the given index
      */
     default String joinArgs(int start, int finish) {
-        if (start < 0 || finish < 0) throw new IllegalArgumentException("Start and finish must be greater than or equal to 0.");
-        if (start > finish) throw new IllegalArgumentException("Start cannot be greater than finish.");
-        if (finish > getArgCount()) throw new IllegalArgumentException("Finish cannot be greater than the number of arguments.");
+        if (start < 0 || start >= getArgCount()) throw new IndexOutOfBoundsException("Start index " + start + " is out of bounds for the arguments array of length " + getArgCount() + ".");
+        if (finish < 0 || finish > getArgCount()) throw new IndexOutOfBoundsException("Finish index " + finish + " is out of bounds for the arguments array of length " + getArgCount() + ".");
+        if (start > finish) throw new IllegalArgumentException("Start index " + start + " cannot be greater than finish index " + finish + ".");
         return String.join(" ", List.of(getArgs()).subList(start, finish));
     }
 
@@ -216,29 +266,6 @@ public interface ICommandContext {
     @Contract(pure = true)
     default String last() {
         return getArgCount() > 0 ? getArgs()[getArgCount() - 1] : null;
-    }
-
-    /**
-     * Get the argument at the given index. This will return null if the index is out of bounds.
-     * @param index The index of the argument to get
-     * @return The argument at the given index. Will return null if the index is out of bounds.
-     */
-    @Nullable
-    @Contract(pure = true)
-    default String get(int index) {
-        return index >= 0 && index < getArgCount() ? getArgs()[index] : null;
-    }
-
-    /**
-     * Get the argument at the given index or return a default value if the index is out of bounds.
-     * @param index The index of the argument to get
-     * @param defaultValue The default value to return if the index is out of bounds
-     * @return The argument at the given index or the default value if the index is out of bounds.
-     */
-    @Nullable
-    @Contract(pure = true)
-    default String getOrDefault(int index, String defaultValue) {
-        return get(index) != null ? get(index) : defaultValue;
     }
 
     /**
@@ -296,6 +323,7 @@ public interface ICommandContext {
      * @param defVal The default value to return if the argument does not exist
      * @return The argument value or the default value if the argument does not exist
      */
+    @SuppressWarnings("unchecked")
     @NotNull
     @Contract(pure = true, value = "null, _ -> fail; _, null -> fail")
     default <T> T getTyped(String argName, T defVal) {
@@ -399,7 +427,7 @@ public interface ICommandContext {
      */
     @NotNull
     @Contract(pure = true)
-    default Player asPlayer() throws PDKCommandException {
+    default Player asPlayer() throws CommandSenderTypeException {
         if (isPlayer()) return (Player)getSender();
         else throw new CommandSenderTypeException(getSender(), Player.class);
     }
@@ -429,7 +457,7 @@ public interface ICommandContext {
      */
     @NotNull
     @Contract(pure = true)
-    default BlockCommandSender asBlock() throws PDKCommandException {
+    default BlockCommandSender asBlock() throws CommandSenderTypeException {
         if (isBlock()) return (BlockCommandSender)getSender();
         else throw new CommandSenderTypeException(getSender(), BlockCommandSender.class);
     }
@@ -459,7 +487,7 @@ public interface ICommandContext {
      */
     @NotNull
     @Contract(pure = true)
-    default Entity asEntity() throws PDKCommandException {
+    default Entity asEntity() throws CommandSenderTypeException {
         if (isEntity()) return (Entity)getSender();
         else throw new CommandSenderTypeException(getSender(), Entity.class);
     }
@@ -495,7 +523,7 @@ public interface ICommandContext {
      */
     @NotNull
     @Contract(pure = true, value = "null -> fail; !null -> _")
-    default <S extends CommandSender> S as(Class<S> type) throws PDKCommandException {
+    default <S extends CommandSender> S as(Class<S> type) throws CommandSenderTypeException {
         if (type == null) throw new IllegalArgumentException("Type cannot be null.");
         if (is(type)) return type.cast(getSender());
         else throw new CommandSenderTypeException(getSender(), type);
@@ -526,11 +554,11 @@ public interface ICommandContext {
     /**
      * Get the location of the sender
      * @return The location of the sender
-     * @throws PDKCommandException If the sender is not locatable
+     * @throws CommandSenderTypeException If the sender is not locatable
      */
     @NotNull
     @Contract(pure = true)
-    default Location getLocation() throws PDKCommandException {
+    default Location getLocation() throws CommandSenderTypeException {
         if (isPlayer()) return asPlayer().getLocation();
         if (isBlock()) return asBlock().getBlock().getLocation();
         if (isEntity()) return asEntity().getLocation();
