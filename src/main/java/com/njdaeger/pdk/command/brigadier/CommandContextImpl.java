@@ -40,8 +40,8 @@ public class CommandContextImpl implements ICommandContext {
                 for (var i = startIndex; i < input.length(); i++) {
                     if (parsedMap.containsKey(i)) {
                         var parsed = parsedMap.get(i);
-                        argList.add(parsed.getRange().toString());
-                        i = parsed.getRange().getEnd() - 1; //skip to the end of the parsed argument
+                        argList.add(parsed.getRange().get(input));
+                        i = parsed.getRange().getEnd(); //skip to the end of the parsed argument
                         builder = new StringBuilder(); //reset the builder
                     } else if (input.charAt(i) != ' ') {
                         builder.append(input.charAt(i));
@@ -51,6 +51,9 @@ public class CommandContextImpl implements ICommandContext {
                             builder = new StringBuilder();
                         }
                     }
+                }
+                if (!builder.isEmpty()) {
+                    argList.add(builder.toString());
                 }
                 for (var i = 0; i < argList.size(); i++) {
                     argumentIndexMapping.put(i, argList.get(i));
