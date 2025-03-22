@@ -88,13 +88,13 @@ public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, Stri
         var currentInput = builder.getRemaining().trim();
 
         if (suggestions.isEmpty()) {
-            Stream.of(enumClass.getEnumConstants()).filter(e -> e.name().toLowerCase().contains(currentInput.toLowerCase()) || currentInput.isBlank()).forEach(e -> builder.suggest(e.name().toLowerCase()));
+            Stream.of(enumClass.getEnumConstants()).filter(e -> convertToNative(e).toLowerCase().contains(currentInput.toLowerCase()) || currentInput.isBlank()).forEach(e -> builder.suggest(convertToNative(e).toLowerCase()));
             return builder.buildFuture();
         }
 
         suggestions.forEach((k, v) -> {
-            var suggestionContainsCurrentInput = k.name().toLowerCase().contains(currentInput.toLowerCase()) || v.getString().toLowerCase().contains(currentInput.toLowerCase());
-            if (suggestionContainsCurrentInput || currentInput.isBlank()) builder.suggest(k.name(), v);
+            var suggestionContainsCurrentInput = convertToNative(k).toLowerCase().contains(currentInput.toLowerCase()) || v.getString().toLowerCase().contains(currentInput.toLowerCase());
+            if (suggestionContainsCurrentInput || currentInput.isBlank()) builder.suggest(convertToNative(k), v);
         });
         return builder.buildFuture();
     }

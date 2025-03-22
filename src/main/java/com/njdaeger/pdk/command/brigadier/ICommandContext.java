@@ -86,14 +86,14 @@ public interface ICommandContext {
     }
 
     /**
-     * Get the arguments that were passed to the command. This does not include flags nor the command alias.
+     * Get the arguments that were passed to the command chunked by their parsed type. This will include flags as a single entry in this array.
      * @return The arguments that were passed to the command. Will return an empty array if there are no arguments.
      */
     @NotNull
     String[] getArgs();
 
     /**
-     * Get the number of arguments that were passed to the command. This does not include flags nor the command alias.
+     * Get the number of arguments that were passed to the command. This includes multi spaced arguments as single array entries.
      * @return The number of arguments that were passed to the command.
      */
     @Contract(pure = true)
@@ -367,10 +367,22 @@ public interface ICommandContext {
      * get the sender as a console sender
      * @return the sender as a console sender
      */
+    @NotNull
+    @Contract(pure = true)
+    default ConsoleCommandSender asConsole() throws CommandSenderTypeException {
+        if (isConsole()) return (ConsoleCommandSender)getSender();
+        else throw new CommandSenderTypeException(getSender(), ConsoleCommandSender.class);
+    }
+
+    /**
+     * get the sender as a console sender or null if the sender is not a console
+     * @return the sender as a console sender or null if the sender is not a console
+     */
     @Nullable
     @Contract(pure = true)
-    default ConsoleCommandSender asConsole() {
-        return isConsole() ? (ConsoleCommandSender)getSender() : null;
+    default ConsoleCommandSender asConsoleOrNull() {
+        if (isConsole()) return (ConsoleCommandSender)getSender();
+        return null;
     }
 
     /**
@@ -393,6 +405,17 @@ public interface ICommandContext {
     }
 
     /**
+     * Get the sender as a player or null if the sender is not a player
+     * @return The sender as a player or null if the sender is not a player
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Player asPlayerOrNull() {
+        if (isPlayer()) return (Player)getSender();
+        return null;
+    }
+
+    /**
      * Check if the sender is a block
      * @return True if the sender is a block, false otherwise
      */
@@ -412,6 +435,17 @@ public interface ICommandContext {
     }
 
     /**
+     * Get the sender as a block sender or null if the sender is not a block
+     * @return The sender as a block sender or null if the sender is not a block
+     */
+    @Nullable
+    @Contract(pure = true)
+    default BlockCommandSender asBlockOrNull() {
+        if (isBlock()) return (BlockCommandSender)getSender();
+        return null;
+    }
+
+    /**
      * Check if the sender is an entity
      * @return True if the sender is an entity, false otherwise
      */
@@ -428,6 +462,17 @@ public interface ICommandContext {
     default Entity asEntity() throws PDKCommandException {
         if (isEntity()) return (Entity)getSender();
         else throw new CommandSenderTypeException(getSender(), Entity.class);
+    }
+
+    /**
+     * Get the sender as an entity or null if the sender is not an entity
+     * @return The sender as an entity or null if the sender is not an entity
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Entity asEntityOrNull() {
+        if (isEntity()) return (Entity)getSender();
+        return null;
     }
 
     /**
@@ -457,6 +502,20 @@ public interface ICommandContext {
     }
 
     /**
+     * Get the sender as the given type or null if the sender is not of that type
+     * @param type The type to get the sender as
+     * @param <S> The type to get the sender as
+     * @return The sender as the given type or null if the sender is not of that type
+     */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail; !null -> _")
+    default <S extends CommandSender> S asOrNull(Class<S> type) {
+        if (type == null) throw new IllegalArgumentException("Type cannot be null.");
+        if (is(type)) return type.cast(getSender());
+        return null;
+    }
+
+    /**
      * Check if the sender is locatable
      * @return True if the sender is locatable, false otherwise
      */
@@ -476,6 +535,19 @@ public interface ICommandContext {
         if (isBlock()) return asBlock().getBlock().getLocation();
         if (isEntity()) return asEntity().getLocation();
         throw new CommandSenderTypeException("This command requires a command sender that is either a Player, Block, or Entity so a location can be determined.");
+    }
+
+    /**
+     * Get the location of the sender or null if the sender is not locatable
+     * @return The location of the sender or null if the sender is not locatable
+     */
+    @Nullable
+    @Contract(pure = true)
+    default Location getLocationOrNull() {
+        try {
+            return getLocation();
+        } catch (PDKCommandException ignored) {}
+        return null;
     }
 
     /**

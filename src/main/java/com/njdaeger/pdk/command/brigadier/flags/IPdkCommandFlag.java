@@ -25,6 +25,12 @@ public interface IPdkCommandFlag<T> {
     String getTooltip();
 
     /**
+     * Determines if the flag is hidden from tab completion.
+     * @return True if the flag is hidden, false otherwise.
+     */
+    boolean isHidden();
+
+    /**
      * Determines if the flag is a boolean flag (takes no arguments).
      * @return True if the flag is a boolean flag, false otherwise.
      */

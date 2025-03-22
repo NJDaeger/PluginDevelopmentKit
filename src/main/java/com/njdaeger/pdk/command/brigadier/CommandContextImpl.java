@@ -1,17 +1,15 @@
 package com.njdaeger.pdk.command.brigadier;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
-import com.mojang.brigadier.tree.RootCommandNode;
 import com.njdaeger.pdk.command.brigadier.flags.FlagMap;
-import com.njdaeger.pdk.command.exception.PDKCommandException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,20 +18,46 @@ public class CommandContextImpl implements ICommandContext {
 
     private final CommandContext<CommandSourceStack> baseContext;
     private final Map<String, Object> argumentMapping;
+    private final Map<Integer, String> argumentIndexMapping;
     private final FlagMap flagMap;
 
     public CommandContextImpl(CommandContext<CommandSourceStack> baseContext) {
         this.baseContext = baseContext;
+        this.argumentIndexMapping = new HashMap<>();
         try {
             var decfield = baseContext.getClass().getDeclaredField("arguments");
             decfield.setAccessible(true);
             var args = (Map<String, ParsedArgument<CommandSourceStack, ?>>) decfield.get(baseContext);
             argumentMapping = args.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getResult()));
+
+            var input = baseContext.getInput().trim();
+            //we want to trim out all the parser arguments from the input string and replace them with
+            int startIndex = input.indexOf(' ');
+            if (startIndex != -1) {
+                var argList = new ArrayList<String>();
+                var parsedMap = args.values().stream().collect(Collectors.toMap(p -> p.getRange().getStart(), p -> p));
+                var builder = new StringBuilder();
+                for (var i = startIndex; i < input.length(); i++) {
+                    if (parsedMap.containsKey(i)) {
+                        var parsed = parsedMap.get(i);
+                        argList.add(parsed.getRange().toString());
+                        i = parsed.getRange().getEnd() - 1; //skip to the end of the parsed argument
+                        builder = new StringBuilder(); //reset the builder
+                    } else if (input.charAt(i) != ' ') {
+                        builder.append(input.charAt(i));
+                    } else {
+                        if (!builder.isEmpty()) {
+                            argList.add(builder.toString());
+                            builder = new StringBuilder();
+                        }
+                    }
+                }
+                for (var i = 0; i < argList.size(); i++) {
+                    argumentIndexMapping.put(i, argList.get(i));
+                }
+            }
+
             flagMap = hasTypedAs("flags", FlagMap.class) ? getTyped("flags", FlagMap.class) : new FlagMap();
-            args.forEach((arg, parg) -> {
-                System.out.println("Argument: " + arg + " -> " + parg.getResult());
-                System.out.println(parg.getRange().toString());
-            });
         } catch (Exception e) {
             throw new RuntimeException("There was an error getting the arguments from the command context.", e);
         }
@@ -67,11 +91,7 @@ public class CommandContextImpl implements ICommandContext {
 
     @Override
     public @NotNull String[] getArgs() {
-        if (baseContext.getInput().contains(" ")) {
-            var split = baseContext.getInput().split(" ");
-            return Arrays.copyOfRange(split, 1, split.length);
-        }
-        return new String[0];
+        return argumentIndexMapping.values().toArray(new String[0]);
     }
 
     @Override
@@ -91,9 +111,9 @@ public class CommandContextImpl implements ICommandContext {
         if (argName == null) throw new IllegalArgumentException("The argument name cannot be null.");
         if (type == null) throw new IllegalArgumentException("The argument type cannot be null.");
         try {
-            return baseContext.getArgument(argName, type);
+            return type.cast(argumentMapping.get(argName));
         } catch (Exception e) {
-            throw new IllegalArgumentException("There was an error getting the argument from the command context.");
+            throw new IllegalArgumentException("There was an error getting the argument from the command context. Do you have the argument set to the correct argument type in your command definition?", e);
         }
     }
 }

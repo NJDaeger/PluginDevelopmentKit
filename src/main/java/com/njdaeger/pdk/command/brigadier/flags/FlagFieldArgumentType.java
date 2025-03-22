@@ -179,6 +179,6 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             if (flg != null) unusedFlags.remove(flg);
         }
 
-        return unusedFlags;
+        return unusedFlags.stream().filter(f -> !f.isHidden()).toList();
     }
 }

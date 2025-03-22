@@ -15,6 +15,14 @@ public interface IPdkCommandNode {
     ICommandExecutor getExecutor();
 
     /**
+     * Checks if this command node can be executed.
+     * @return True if this command node can be executed, false otherwise.
+     */
+    default boolean canExecute() {
+        return getExecutor() != null;
+    }
+
+    /**
      * Gets the arguments for this command node.
      * @return The arguments for this command node.
      */

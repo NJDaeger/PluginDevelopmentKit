@@ -38,7 +38,7 @@ public abstract class AbstractFixedTypedArgument<TYPE, FIXED_NUMERIC> extends Ba
             LongStream.rangeClosed(parsed * 10L, parsed * 10L + 10).mapToObj(String::valueOf).forEach(newBuilder::suggest);
             return newBuilder.buildFuture();
         }
-        suggestions.forEach((suggestion, message) -> builder.suggest(suggestion.toString(), message));
+        suggestions.forEach((suggestion, message) -> builder.suggest(convertToNative(suggestion).toString(), message));
         return builder.buildFuture();
     }
 

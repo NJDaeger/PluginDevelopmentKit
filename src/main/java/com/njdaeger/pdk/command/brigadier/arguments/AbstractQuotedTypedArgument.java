@@ -22,25 +22,25 @@ public abstract class AbstractQuotedTypedArgument<TYPE> extends BasePdkArgumentT
     public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         var quotedSuggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
         var current = builder.getRemaining();
-        var completingAt = builder.getStart() + (current.contains("\"") ? current.indexOf('"') + 1 : 0);
-        var newBuilder = builder.createOffset(completingAt);
+        var startsWithQuote = current.startsWith("\"");
+        var currentWithoutQuotes = startsWithQuote ? current.substring(1) : current;
+        var newBuilder2 = builder.createOffset(builder.getStart() + current.length());
 
-        if (areQuotesBalancedIgnoringEscaped(current) && !current.isBlank()) return newBuilder.buildFuture();
+        if (areQuotesBalancedIgnoringEscaped(current) && !current.isBlank()) return newBuilder2.buildFuture();
 
         if (quotedSuggestions.isEmpty()) {
-            if (current.isBlank()) {
-                newBuilder.suggest("\"\"", getDefaultTooltipMessage());
-                return newBuilder.buildFuture();
+            if (!currentWithoutQuotes.isBlank()) {
+                builder.suggest(current + "\"", getDefaultTooltipMessage());
+                return builder.buildFuture();
             }
-
-            newBuilder.suggest((current.startsWith("\"") ? current.substring(1) : current) + "\"", getDefaultTooltipMessage());
-
-            return newBuilder.buildFuture();
+            newBuilder2.suggest((startsWithQuote ? "\"" : "\"\""));
+            return newBuilder2.buildFuture();
         }
 
-        quotedSuggestions.forEach((suggestion, tooltip) -> newBuilder.suggest("\"" + suggestion + "\"", tooltip));
-
-        return newBuilder.buildFuture();
+        quotedSuggestions.entrySet().stream()
+                .filter(entry -> currentWithoutQuotes.isBlank() || convertToNative(entry.getKey()).toLowerCase().startsWith(currentWithoutQuotes.toLowerCase()))
+                .forEach(entry -> newBuilder2.suggest(("\"" + convertToNative(entry.getKey()) + "\"").substring(current.length()), entry.getValue()));
+        return newBuilder2.buildFuture();
     }
 
     private static boolean areQuotesBalancedIgnoringEscaped(String str) {

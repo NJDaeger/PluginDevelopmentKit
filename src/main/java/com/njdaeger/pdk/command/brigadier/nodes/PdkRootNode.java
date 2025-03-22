@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PdkHelpTopic;
 import com.njdaeger.pdk.command.brigadier.flags.FlagFieldArgumentType;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
@@ -14,22 +15,28 @@ import com.njdaeger.pdk.command.exception.PermissionDeniedException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import net.kyori.adventure.text.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
 
     private final List<IPdkCommandFlag<?>> flags;
     private final String description;
+    private final BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator;
     private final List<String> aliases;
 
-    public PdkRootNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, List<IPdkCommandFlag<?>> flags, String description, String permission, ArgumentBuilder<CommandSourceStack, ?> baseNode, String[] aliases) {
+    public PdkRootNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, List<IPdkCommandFlag<?>> flags, String description, String permission, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
         super(executor, arguments, permission, baseNode);
         this.flags = flags;
         this.aliases = List.of(aliases);
         this.description = description;
+        this.customHelpTextGenerator = customHelpTextGenerator;
     }
 
     @Override
@@ -48,6 +55,11 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
     }
 
     @Override
+    public BiFunction<IPdkRootNode, CommandSender, TextComponent> getCustomHelpTextGenerator() {
+        return customHelpTextGenerator;
+    }
+
+    @Override
     public void register(Plugin plugin) {
 
         var rootNode = getBaseNode();
@@ -60,7 +72,11 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
         
         getArguments().forEach(arg -> addArgument(rootNode, arg));
         
-        plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, e -> e.registrar().register((LiteralCommandNode<CommandSourceStack>) rootNode.build(), getDescription(), getAliases()));
+        plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, e -> {
+            var registrar = e.registrar();
+            getAliases().forEach(alias -> Bukkit.getHelpMap().addTopic(new PdkHelpTopic(alias, this)));
+            registrar.register((LiteralCommandNode<CommandSourceStack>) rootNode.build(), getDescription(), getAliases());
+        });
     }
 
     private void addArgument(ArgumentBuilder<CommandSourceStack, ?> parentArgument, IPdkCommandNode newArgument) {

@@ -35,7 +35,7 @@ public abstract class AbstractFloatingTypedArgument<TYPE, FLOATING_NUMERIC> exte
             if (!hasNegative && min < 0) newBuilder.suggest("-" + current, () -> "Negative");
             return newBuilder.buildFuture();
         }
-        suggestions.forEach((s, message) -> builder.suggest(s.toString(), message));
+        suggestions.forEach((s, message) -> builder.suggest(convertToNative(s).toString(), message));
         return builder.buildFuture();
     }
 

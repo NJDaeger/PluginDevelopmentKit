@@ -7,9 +7,14 @@ import com.njdaeger.pdk.command.brigadier.nodes.IPdkRootNode;
 import com.njdaeger.pdk.command.brigadier.flags.PdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkRootNode;
 import io.papermc.paper.command.brigadier.Commands;
+import net.kyori.adventure.text.TextComponent;
+import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBuilder, IPdkRootNodeBuilder> implements IPdkRootNodeBuilder {
@@ -17,6 +22,7 @@ public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBu
     private String description;
     private final String[] aliases;
     private final List<IPdkCommandFlag<?>> commandFlags;
+    private BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator;
 
     public PdkRootNodeBuilder(String[] aliases) {
         super((ctx) -> ctx.error("There is no default command executor defined."), null);
@@ -32,19 +38,37 @@ public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBu
 
     @Override
     public IPdkRootNodeBuilder flag(String flagName, String tooltipMessage) {
-        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage));
+        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage, false));
+        return this;
+    }
+
+    @Override
+    public IPdkRootNodeBuilder hiddenFlag(String flagName, String tooltipMessage) {
+        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage, true));
         return this;
     }
 
     @Override
     public <T> IPdkRootNodeBuilder flag(String flagName, String tooltipMessage, ArgumentType<T> flagType) {
-        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage, flagType));
+        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage, flagType, false));
+        return this;
+    }
+
+    @Override
+    public <T> IPdkRootNodeBuilder hiddenFlag(String flagName, String tooltipMessage, ArgumentType<T> flagType) {
+        commandFlags.add(new PdkCommandFlag<>(flagName, tooltipMessage, flagType, true));
         return this;
     }
 
     @Override
     public IPdkRootNodeBuilder defaultExecutor(ICommandExecutor executor) {
         this.defaultExecutor = executor;
+        return this;
+    }
+
+    @Override
+    public IPdkRootNodeBuilder helpText(BiFunction<IPdkRootNode, CommandSender, TextComponent> componentGenerator) {
+        this.customHelpTextGenerator = componentGenerator;
         return this;
     }
 
@@ -87,6 +111,6 @@ public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBu
     @Override
     public IPdkRootNode build() {
         var children = childrenNodes.stream().map(IPdkCommandNodeBuilder::build).collect(Collectors.toCollection(ArrayList::new));
-        return new PdkRootNode(commandExecutor, children, commandFlags, description, permission, Commands.literal(aliases[0]), aliases);
+        return new PdkRootNode(commandExecutor, children, commandFlags, description, permission, Commands.literal(aliases[0]), customHelpTextGenerator, aliases);
     }
 }
