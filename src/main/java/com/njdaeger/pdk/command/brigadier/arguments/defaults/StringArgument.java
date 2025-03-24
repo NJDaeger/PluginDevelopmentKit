@@ -5,6 +5,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.AbstractStringTypedArgument;
+import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class StringArgument extends AbstractStringTypedArgument<String> {
     }
 
     @Override
-    public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public String convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         return nativeType;
     }
 

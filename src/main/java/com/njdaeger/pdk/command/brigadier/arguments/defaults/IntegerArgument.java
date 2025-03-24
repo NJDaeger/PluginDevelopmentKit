@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.AbstractIntegerTypedArgument;
+import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class IntegerArgument extends AbstractIntegerTypedArgument<Integer> {
     }
 
     @Override
-    public Integer convertToCustom(Integer nativeType, StringReader reader) throws CommandSyntaxException {
+    public Integer convertToCustom(CommandSender sender, Integer nativeType, StringReader reader) throws CommandSyntaxException {
         if (nativeType < min || nativeType > max) {
             throw INTEGER_OUT_OF_BOUNDS.createWithContext(reader, outOfBoundsMessage.apply(nativeType));
         }

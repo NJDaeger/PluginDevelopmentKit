@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.AbstractFloatTypedArgument;
+import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class FloatArgument extends AbstractFloatTypedArgument<Float> {
     }
 
     @Override
-    public Float convertToCustom(Float nativeType, StringReader reader) throws CommandSyntaxException {
+    public Float convertToCustom(CommandSender sender, Float nativeType, StringReader reader) throws CommandSyntaxException {
         if (nativeType < min || nativeType > max) {
             throw FLOAT_OUT_OF_BOUNDS.createWithContext(reader, outOfBoundsMessage.apply(nativeType));
         }

@@ -14,6 +14,7 @@ import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,7 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
     }
 
     @Override
-    public Player convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public Player convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         var player = Bukkit.getPlayer(nativeType);
         if (player == null) {
             var length = nativeType.length();

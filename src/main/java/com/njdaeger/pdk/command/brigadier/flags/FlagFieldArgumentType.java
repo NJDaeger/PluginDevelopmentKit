@@ -10,6 +10,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import com.njdaeger.pdk.utils.Pair;
+import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
     }
 
     @Override
-    public FlagMap convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public FlagMap convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         return parse(reader);
     }
 

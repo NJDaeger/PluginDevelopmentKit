@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
+import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class GreedyStringArgument extends BasePdkArgumentType<String, String> {
     }
 
     @Override
-    public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public String convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         return nativeType;
     }
 

@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.AbstractQuotedTypedArgument;
+import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class QuotedStringArgument extends AbstractQuotedTypedArgument<String> {
     }
 
     @Override
-    public String convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public String convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         if (!allowEmpty && nativeType.isEmpty()) {
             reader.setCursor(reader.getCursor() - 2);
             throw EMPTY_STRING.createWithContext(reader, nativeType);

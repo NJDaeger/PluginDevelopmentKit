@@ -4,8 +4,11 @@ import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -42,15 +45,21 @@ public interface IPdkArgumentType<CUSTOM, NATIVE> extends CustomArgumentType<CUS
     /**
      * Converts the native argument type to the custom argument type for command execution.
      *
+     * @param source The command sender. Note: This may be null in some instances.
      * @param nativeType The native argument type.
      * @param reader The stringreader used to parse the command.
      * @return The custom argument type.
      * @throws CommandSyntaxException If the conversion from the native to the custom fails.
      */
-    CUSTOM convertToCustom(NATIVE nativeType, StringReader reader) throws CommandSyntaxException;
+    CUSTOM convertToCustom(@Nullable CommandSender source, NATIVE nativeType, StringReader reader) throws CommandSyntaxException;
+
+    @Override
+    default <S> CUSTOM parse(StringReader reader, S source) throws CommandSyntaxException {
+        return this.convertToCustom(((CommandSourceStack)source).getSender(), getNativeType().parse(reader), reader);
+    }
 
     @Override
     default @NotNull CUSTOM parse(@NotNull StringReader reader) throws CommandSyntaxException {
-        return convertToCustom(getNativeType().parse(reader), reader);
+        return convertToCustom(null, getNativeType().parse(reader), reader);
     }
 }

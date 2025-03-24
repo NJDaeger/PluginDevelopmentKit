@@ -13,6 +13,7 @@ import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -60,7 +61,7 @@ public class EnumArgument<T extends Enum<T>> extends BasePdkArgumentType<T, Stri
     }
 
     @Override
-    public T convertToCustom(String nativeType, StringReader reader) throws CommandSyntaxException {
+    public T convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
         try {
             return Enum.valueOf(enumClass, nativeType.toUpperCase());
         } catch (IllegalArgumentException e) {
