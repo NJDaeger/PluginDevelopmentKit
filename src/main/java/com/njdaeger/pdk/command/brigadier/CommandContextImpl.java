@@ -30,7 +30,7 @@ public class CommandContextImpl implements ICommandContext {
             var args = (Map<String, ParsedArgument<CommandSourceStack, ?>>) decfield.get(baseContext);
             argumentMapping = args.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getResult()));
 
-            var input = baseContext.getInput().trim();
+            var input = baseContext.getInput();
             //we want to trim out all the parser arguments from the input string and replace them with
             int startIndex = input.indexOf(' ');
             if (startIndex != -1) {
@@ -80,6 +80,11 @@ public class CommandContextImpl implements ICommandContext {
     @Override
     public <T> @Nullable T getFlag(String flag, T defaultValue) {
         return flagMap.getFlag(flag, defaultValue);
+    }
+
+    @Override
+    public @NotNull Map<String, Object> getFlags() {
+        return flagMap.getFlags();
     }
 
     @Override

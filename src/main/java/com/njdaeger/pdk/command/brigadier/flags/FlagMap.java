@@ -14,6 +14,10 @@ public class FlagMap {
         this.flagMap = new HashMap<>();
     }
 
+    public Map<String, Object> getFlags() {
+        return flagMap;
+    }
+
     public boolean hasFlag(String flagName) {
         return flagMap.containsKey(flagName.toLowerCase());
     }

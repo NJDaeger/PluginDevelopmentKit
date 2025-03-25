@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -52,6 +53,14 @@ public interface ICommandContext {
     @Nullable
     @Contract(pure = true, value = "null, _ -> fail;  _, null -> null")
     <T> T getFlag(String flag, T defaultValue);
+
+    /**
+     * Get all the flags that were used in this command execution
+     * @return A map of all the flags and their values
+     */
+    @NotNull
+    @Contract(pure = true)
+    Map<String, Object> getFlags();
 
     /**
      * Get the alias of the command that was executed

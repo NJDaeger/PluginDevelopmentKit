@@ -14,7 +14,9 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> {
@@ -29,87 +31,38 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
     }
 
     @Override
-    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var input = builder.getRemaining().trim();
-        var splitInput = input.split(" ");
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+
+        var input = builder.getRemaining();
+        var splitInput = builder.getRemaining().trim().split(" ");
+
         var currentWord = splitInput[splitInput.length - 1];
-        var startsWithDash = currentWord.startsWith("-");
-        var currentWordWithoutDash = startsWithDash ? currentWord.substring(1) : currentWord;
-        var currentFlagIndex = -1;
-        IPdkCommandFlag<?> currentFlag = null;
-        for (var i = splitInput.length - 1; i >= 0; i--) {
-            var foundFlag = getFlag(splitInput[i]);
-            if (foundFlag != null) {
-                currentFlagIndex = i;
-                currentFlag = foundFlag;
-                break;
-            }
-        }
+        var previousWord = splitInput.length > 1 ? splitInput[splitInput.length - 2] : null;
+        var currentFlag = getFlag(currentWord);
+        var previousFlag = previousWord != null ? getFlag(previousWord) : null;
 
-        if (currentFlag == null //if there is no current flag
-            || currentFlag.isBooleanFlag() //or the current flag is a boolean flag
-            || (builder.getRemaining().endsWith(" ") && currentFlagIndex < splitInput.length - 1) //or the current flag already has its value written
-            || (startsWithDash && !builder.getRemaining().endsWith(" ") && currentFlag.isBooleanFlag()) //or the current word starts with a dash
-        ) {
-            var unusedFlags = getUnusedFlags(context);
-            var offset = builder.getStart() + builder.getRemaining().length();
+        var additionalOffset = input.endsWith(" ") ? 0 : currentWord.length();
 
-            //attempt to find flags that start with the current word
-            var possibleFlagSuggestions = unusedFlags.stream()
-                    .filter(flag -> flag.getName().toLowerCase().startsWith(currentWordWithoutDash.toLowerCase()))
-                    .map(flag -> Pair.of((startsWithDash ? "" : "-") + flag.getName().substring(currentWordWithoutDash.length()), flag.getTooltipAsMessage()))
-                    .toList();
-
-            if (currentFlag != null && currentFlag.isBooleanFlag() && builder.getRemaining().endsWith(" ")) {
-                possibleFlagSuggestions = unusedFlags.stream()
-                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
-                        .toList();
-            }
-
-            //if the current word doesnt start with a dash and the current word isnt a value for a flag,
-            //start the offset at the beginning of the current word. this is because the user is trying to
-            //tab complete a flag name and did not start with a dash
-            if (!startsWithDash && (splitInput.length - 1) == currentFlagIndex) offset -= currentWord.length();
-
-            //if none of those, attempt to find flags that contain the current word
-            if (possibleFlagSuggestions.isEmpty()) {
-                possibleFlagSuggestions = unusedFlags.stream()
-                        .filter(flag -> flag.getName().toLowerCase().contains(currentWordWithoutDash.toLowerCase()))
-                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
-                        .toList();
-
-                //start the offset at the beginning of the current word
-                if (!possibleFlagSuggestions.isEmpty()) offset -= currentWord.length();
-            }
-            if (possibleFlagSuggestions.isEmpty()) {
-                possibleFlagSuggestions = unusedFlags.stream()
-                        .map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage()))
-                        .toList();
-
-                //start the offset at the beginning of the current word if the current word starts with a dash (meaning the user is trying to tab complete a flag name)
-                if (!possibleFlagSuggestions.isEmpty() && startsWithDash) offset -= currentWord.length();
-            }
-
-            //if the user tries to split the name of the flag by a space, it will correct the offset
-            if (startsWithDash && builder.getRemaining().endsWith(" ") && (currentFlag == null || !currentFlag.isBooleanFlag())) --offset;
-
+        if ((currentFlag == null || currentFlag.isBooleanFlag()) && (previousFlag == null || previousFlag.isBooleanFlag()) || (currentFlag == null && !previousFlag.isBooleanFlag() && input.endsWith(" "))) {
+            var unusedFlags = getUnusedFlags(context).stream().map(flag -> Pair.of("-" + flag.getName(), flag.getTooltipAsMessage())).toList();
+            var offset = builder.getStart() + input.length() - additionalOffset;
             var newBuilder = builder.createOffset(offset);
-            possibleFlagSuggestions.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
+            unusedFlags.forEach(flag -> newBuilder.suggest(flag.getFirst(), flag.getSecond()));
             return newBuilder.buildFuture();
         }
 
-        var flagVlaueOffset = builder.getRemaining().endsWith(" ") ? 0 : currentWord.length();
-        var newBuilder = builder.createOffset(builder.getStart() +  builder.getRemaining().length() - flagVlaueOffset);
-        return currentFlag.getType().listSuggestions(context, newBuilder);
+        var newBuilder = builder.createOffset(builder.getStart() + input.length() - additionalOffset);
+        var flagToComplete = currentFlag != null ? currentFlag : previousFlag;
+        return flagToComplete.getType().listSuggestions(context, newBuilder);
     }
 
     @Override
     public FlagMap convertToCustom(CommandSender sender, String nativeType, StringReader reader) throws CommandSyntaxException {
-        return parse(reader);
+        return parse(reader, sender);
     }
 
     @Override
-    public @NotNull FlagMap parse(@NotNull StringReader reader) throws CommandSyntaxException {
+    public @NotNull <S> FlagMap parse(@NotNull StringReader reader, S sender) throws CommandSyntaxException {
         var map = new FlagMap();
         while (reader.canRead()) {
             reader.skipWhitespace();
@@ -118,7 +71,7 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
             } else {
                 reader.skip();
                 var flagName = readFlagName(reader);
-                var flag = getFlag(flagName);
+                var flag = getFlag("-" + flagName);
 
                 if (flag == null) {
                     var flagNameLength = flagName.length();
@@ -155,7 +108,8 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
     }
 
     private IPdkCommandFlag<?> getFlag(String flagName) {
-        flagName = flagName.startsWith("-") ? flagName.substring(1) : flagName;
+        if (!flagName.startsWith("-")) return null;
+        flagName = flagName.substring(1);
         for (var flag : flags) {
             if (flag.getName().equalsIgnoreCase(flagName)) {
                 return flag;
