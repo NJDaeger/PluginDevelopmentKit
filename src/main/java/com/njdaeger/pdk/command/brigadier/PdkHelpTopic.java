@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class PdkHelpTopic extends HelpTopic {
 
@@ -43,7 +44,7 @@ public class PdkHelpTopic extends HelpTopic {
 
     @Override
     public boolean canSee(@NotNull CommandSender sender) {
-        return rootNode.getPermission() == null || sender.hasPermission(rootNode.getPermission());
+        return hasPermission(rootNode, sender);
     }
 
     /**
@@ -120,7 +121,7 @@ public class PdkHelpTopic extends HelpTopic {
 
         // Process child arguments
         for (IPdkCommandNode arg : node.getArguments()) {
-            if (arg.getPermission() != null && !sender.hasPermission(arg.getPermission())) continue;
+            if (!hasPermission(arg, sender)) continue;
             String argPattern = getArgumentPattern(arg);
             buildPatterns(arg, currentPattern + " " + argPattern, patterns, sender);
         }
@@ -135,6 +136,12 @@ public class PdkHelpTopic extends HelpTopic {
             return root.getPrimaryAlias();
         }
         return "";
+    }
+
+    private static boolean hasPermission(IPdkCommandNode node, CommandSender sender) {
+        return (node.getPermissions() == null || node.getPermissionMode() == null)
+                || (node.getPermissionMode() == PermissionMode.ANY && Stream.of(node.getPermissions()).anyMatch(sender::hasPermission))
+                || (node.getPermissionMode() == PermissionMode.ALL && Stream.of(node.getPermissions()).allMatch(sender::hasPermission));
     }
 
 }

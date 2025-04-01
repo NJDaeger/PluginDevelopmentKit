@@ -2,17 +2,27 @@ package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkCommandNode;
 
 public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuilder<?, ?>, PARENT_NODE> {
 
     /**
-     * Sets the permission for this node.
-     * @param permission The permission to set.
+     * Sets the permission for this node. Requires the user has all the permissions listed to run this branch.
+     * @param permissionMode The permission mode to set. ALL means they need all permissions defined, ANY means they need any one of the permissions defined.
+     * @param permission The permission(s) to set.
      * @return The current node.
      */
-    CURRENT_NODE permission(String permission);
+    CURRENT_NODE permission(PermissionMode permissionMode, String... permission);
 
+    /**
+     * Sets the permission for this node. Requires the user has any one of the permissions listed to run this branch.
+     * @param permission The permission(s) to set.
+     * @return The current node.
+     */
+    default CURRENT_NODE permission(String... permission) {
+        return permission(PermissionMode.ANY, permission);
+    }
     /**
      * Allows this node to be an execution path and will execute the default executor.
      * @return The current node.
@@ -71,6 +81,12 @@ public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuil
      * Gets the permission of this node.
      * @return The permission of this node.
      */
-    String getPermission();
+    String[] getPermissions();
+
+    /**
+     * Gets the permission mode of this node.
+     * @return The permission mode of this node.
+     */
+    PermissionMode getPermissionMode();
 
 }

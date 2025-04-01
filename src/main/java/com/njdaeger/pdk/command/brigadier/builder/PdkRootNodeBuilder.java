@@ -2,6 +2,7 @@ package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkRootNode;
 import com.njdaeger.pdk.command.brigadier.flags.PdkCommandFlag;
@@ -11,10 +12,8 @@ import net.kyori.adventure.text.TextComponent;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBuilder, IPdkRootNodeBuilder> implements IPdkRootNodeBuilder {
@@ -73,8 +72,9 @@ public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBu
     }
 
     @Override
-    public PdkRootNodeBuilder permission(String permission) {
-        this.permission = permission;
+    public PdkRootNodeBuilder permission(PermissionMode permissionmode, String... permissions) {
+        this.permissionMode = permissionmode;
+        this.permissions = permissions;
         return this;
     }
 
@@ -111,6 +111,6 @@ public class PdkRootNodeBuilder extends BasePdkCommandNodeBuilder<IPdkRootNodeBu
     @Override
     public IPdkRootNode build() {
         var children = childrenNodes.stream().map(IPdkCommandNodeBuilder::build).collect(Collectors.toCollection(ArrayList::new));
-        return new PdkRootNode(commandExecutor, children, commandFlags, description, permission, Commands.literal(aliases[0]), customHelpTextGenerator, aliases);
+        return new PdkRootNode(commandExecutor, children, commandFlags, description, permissionMode, permissions, Commands.literal(aliases[0]), customHelpTextGenerator, aliases);
     }
 }

@@ -2,13 +2,15 @@ package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BasePdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuilder<CURRENT_NODE, PARENT_NODE>, PARENT_NODE extends IPdkCommandNodeBuilder<?, ?>> implements IPdkCommandNodeBuilder<CURRENT_NODE, PARENT_NODE> {
 
-    protected String permission;
+    protected String[] permissions;
+    protected PermissionMode permissionMode;
     protected ICommandExecutor commandExecutor;
     protected ICommandExecutor defaultExecutor;
     protected final PARENT_NODE parentNode;
@@ -38,8 +40,13 @@ public abstract class BasePdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommand
     }
 
     @Override
-    public String getPermission() {
-        return permission;
+    public String[] getPermissions() {
+        return permissions;
+    }
+
+    @Override
+    public PermissionMode getPermissionMode() {
+        return permissionMode;
     }
 
     @Override

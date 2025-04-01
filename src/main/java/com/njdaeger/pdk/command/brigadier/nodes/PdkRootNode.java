@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PdkHelpTopic;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.flags.FlagFieldArgumentType;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
 
@@ -31,8 +33,8 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
     private final BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator;
     private final List<String> aliases;
 
-    public PdkRootNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, List<IPdkCommandFlag<?>> flags, String description, String permission, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
-        super(executor, arguments, permission, baseNode);
+    public PdkRootNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, List<IPdkCommandFlag<?>> flags, String description, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
+        super(executor, arguments, permissionMode, permissions, baseNode);
         this.flags = flags;
         this.aliases = List.of(aliases);
         this.description = description;
@@ -65,9 +67,9 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
         var rootNode = getBaseNode();
 
         if (getExecutor() != null) {
-            if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(getPermission(), getExecutor()));
-            else rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermission(), getExecutor())))
-                    .executes(commandExecutionWrapper(getPermission(), getExecutor()));
+            if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+            else rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor())))
+                    .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
         }
         
         getArguments().forEach(arg -> addArgument(rootNode, arg));
@@ -91,18 +93,24 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
         if (newArgument.getExecutor() != null) {
             //flags are not compatible with greedy string arguments
             if (flags.isEmpty() || (newArgument instanceof IPdkTypedNode<?> tArg && (tArg.getArgumentType() instanceof GreedyStringArgument || (tArg.getArgumentType() instanceof StringArgumentType stArg && stArg.getType() == StringArgumentType.StringType.GREEDY_PHRASE))))
-                arg.executes(commandExecutionWrapper(newArgument.getPermission(), newArgument.getExecutor()));
-            else arg.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermission(), newArgument.getExecutor())))
-                    .executes(commandExecutionWrapper(newArgument.getPermission(), newArgument.getExecutor()));
+                arg.executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+            else arg.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor())))
+                    .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
         }
 
         parentArgument.then(arg);
     }
 
-    private static Command<CommandSourceStack> commandExecutionWrapper(String permission, ICommandExecutor executor) {
+    private static Command<CommandSourceStack> commandExecutionWrapper(PermissionMode permissionMode, String[] permissions, ICommandExecutor executor) {
         return (ctx) -> {
             try {
-                if (permission != null && !ctx.getSource().getSender().hasPermission(permission)) throw new PermissionDeniedException();
+                if (permissions != null
+                        && permissions.length > 0
+                        && permissionMode != null
+                        && ((permissionMode == PermissionMode.ANY && Stream.of(permissions).noneMatch(ctx.getSource().getSender()::hasPermission))
+                            || (permissionMode == PermissionMode.ALL && Stream.of(permissions).anyMatch(permission -> !ctx.getSource().getSender().hasPermission(permission)))
+                        )
+                    ) throw new PermissionDeniedException();
                 executor.execute(new CommandContextImpl(ctx));
             } catch (PDKCommandException e) {
                 e.showError(ctx.getSource().getSender());
