@@ -2,6 +2,7 @@ package com.njdaeger.pdk.command.brigadier.nodes;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 
 import java.util.List;
@@ -32,7 +33,13 @@ public interface IPdkCommandNode {
      * Gets the permission for this command node.
      * @return The permission for this command node.
      */
-    String getPermission();
+    String[] getPermissions();
+
+    /**
+     * Gets the permission mode for this command node.
+     * @return The permission mode for this command node.
+     */
+    PermissionMode getPermissionMode();
 
     /**
      * Gets the base mojang-based node for this command node.

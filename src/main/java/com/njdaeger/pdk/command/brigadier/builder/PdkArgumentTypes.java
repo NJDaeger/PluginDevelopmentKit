@@ -7,6 +7,7 @@ import com.njdaeger.pdk.command.brigadier.arguments.defaults.EnumArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.FloatArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.IntegerArgument;
+import com.njdaeger.pdk.command.brigadier.arguments.defaults.LongArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.PlayerArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.QuotedStringArgument;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.StringArgument;
@@ -109,6 +110,38 @@ public class PdkArgumentTypes {
 
     public static IntegerArgument integer() {
         return new IntegerArgument(() -> "A number.");
+    }
+
+    //endregion
+
+    //region LongArgument
+
+    public static LongArgument longArg(Function<ICommandContext, Collection<Long>> suggestions, Message defaultTooltipMessage) {
+        return new LongArgument(suggestions, defaultTooltipMessage);
+    }
+
+    public static LongArgument longArg(Function<ICommandContext, Map<Long, Message>> suggestions) {
+        return new LongArgument(suggestions);
+    }
+
+    public static LongArgument longArg(long min, long max, Function<Long, Message> outOfBoundsMessage, Message defaultTooltipMessage) {
+        return new LongArgument(min, max, outOfBoundsMessage, defaultTooltipMessage);
+    }
+
+    public static LongArgument longArg(long min, Message defaultTooltipMessage) {
+        return new LongArgument(min, Long.MAX_VALUE, l -> new LiteralMessage("Number must be greater than " + min), defaultTooltipMessage);
+    }
+
+    public static LongArgument longArg(long min, long max) {
+        return new LongArgument(min, max, l -> () -> "Number '" + l + "' must be between " + min + " and " + max, () -> "A number.");
+    }
+
+    public static LongArgument longArg(Message defaultTooltipMessage) {
+        return new LongArgument(defaultTooltipMessage);
+    }
+
+    public static LongArgument longArg() {
+        return new LongArgument(() -> "A number.");
     }
 
     //endregion

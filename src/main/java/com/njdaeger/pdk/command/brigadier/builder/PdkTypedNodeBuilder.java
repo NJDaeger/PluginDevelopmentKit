@@ -2,6 +2,7 @@ package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkTypedNode;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkTypedNode;
 import io.papermc.paper.command.brigadier.Commands;
@@ -18,12 +19,13 @@ public class PdkTypedNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?, ?
         super(defaultExecutor, parentNode);
         this.argumentName = argumentName;
         this.argumentType = argumentType;
-        this.permission = parentNode.getPermission();
+        this.permissions = parentNode.getPermissions();
     }
 
     @Override
-    public PdkTypedNodeBuilder<PARENT_NODE, T> permission(String permission) {
-        this.permission = permission;
+    public PdkTypedNodeBuilder<PARENT_NODE, T> permission(PermissionMode permissionMode, String... permissions) {
+        this.permissionMode = permissionMode;
+        this.permissions = permissions;
         return this;
     }
 
@@ -42,6 +44,6 @@ public class PdkTypedNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?, ?
     @Override
     public IPdkTypedNode<T> build() {
         var children = childrenNodes.stream().map(IPdkCommandNodeBuilder::build).collect(Collectors.toCollection(ArrayList::new));
-        return new PdkTypedNode<>(commandExecutor, children, permission, Commands.argument(argumentName, argumentType), argumentName, argumentType);
+        return new PdkTypedNode<>(commandExecutor, children, permissionMode, permissions, Commands.argument(argumentName, argumentType), argumentName, argumentType);
     }
 }

@@ -1,6 +1,7 @@
 package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkLiteralNode;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkLiteralNode;
 import io.papermc.paper.command.brigadier.Commands;
@@ -15,12 +16,14 @@ public class PdkLiteralNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?,
     public PdkLiteralNodeBuilder(ICommandExecutor defaultExecutor, PARENT_NODE parentNode, String literal) {
         super(defaultExecutor, parentNode);
         this.literal = literal;
-        this.permission = parentNode.getPermission();
+        this.permissions = parentNode.getPermissions();
+        this.permissionMode = parentNode.getPermissionMode();
     }
 
     @Override
-    public PdkLiteralNodeBuilder<PARENT_NODE> permission(String permission) {
-        this.permission = permission;
+    public PdkLiteralNodeBuilder<PARENT_NODE> permission(PermissionMode permissionMode, String... permissions) {
+        this.permissionMode = permissionMode;
+        this.permissions = permissions;
         return this;
     }
 
@@ -39,7 +42,7 @@ public class PdkLiteralNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?,
     @Override
     public IPdkLiteralNode build() {
         var children = childrenNodes.stream().map(IPdkCommandNodeBuilder::build).collect(Collectors.toCollection(ArrayList::new));
-        return new PdkLiteralNode(commandExecutor, children, permission, Commands.literal(literal), literal);
+        return new PdkLiteralNode(commandExecutor, children, permissionMode, permissions, Commands.literal(literal), literal);
     }
 
 }
