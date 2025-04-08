@@ -43,7 +43,7 @@ public abstract class AbstractQuotedTypedArgument<TYPE> extends BasePdkArgumentT
         return newBuilder2.buildFuture();
     }
 
-    private static boolean areQuotesBalancedIgnoringEscaped(String str) {
+    protected static boolean areQuotesBalancedIgnoringEscaped(String str) {
         int count = 0;
         boolean escaped = false;
         for (char c : str.toCharArray()) {
