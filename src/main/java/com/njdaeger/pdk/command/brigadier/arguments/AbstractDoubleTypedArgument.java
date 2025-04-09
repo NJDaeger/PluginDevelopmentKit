@@ -4,9 +4,9 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractDoubleTypedArgument<TYPE> extends AbstractFixedTypedArgument<TYPE, Double> {
+public abstract class AbstractDoubleTypedArgument<TYPE> extends AbstractFloatingTypedArgument<TYPE, Double> {
 
-    public AbstractDoubleTypedArgument(long min, long max) {
+    public AbstractDoubleTypedArgument(double min, double max) {
         super(min, max);
     }
 
