@@ -68,8 +68,12 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
 
         if (getExecutor() != null) {
             if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
-            else rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor())))
-                    .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+            else {
+                rootNode.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()))))
+                        .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+//                rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor())))
+//                        .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+            }
         }
         
         getArguments().forEach(arg -> addArgument(rootNode, arg));
@@ -94,8 +98,13 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
             //flags are not compatible with greedy string arguments
             if (flags.isEmpty() || (newArgument instanceof IPdkTypedNode<?> tArg && (tArg.getArgumentType() instanceof GreedyStringArgument || (tArg.getArgumentType() instanceof StringArgumentType stArg && stArg.getType() == StringArgumentType.StringType.GREEDY_PHRASE))))
                 arg.executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
-            else arg.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor())))
-                    .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+            else {
+                arg.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()))))
+                        .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+
+//                arg.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor())))
+//                        .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+            }
         }
 
         parentArgument.then(arg);

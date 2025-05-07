@@ -37,13 +37,13 @@ public abstract class BasePdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumen
         var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
 
         var splitWords = builder.getRemaining().split(" ");
-        var currentWord = splitWords[splitWords.length - 1];
+        var currentWord = splitWords.length == 0 ? builder.getRemaining() : splitWords[splitWords.length - 1];
 
         var newBuilder = builder.createOffset(builder.getStart() + builder.getRemaining().length());
 
         suggestions.entrySet().stream()
-                .filter(entry -> currentWord.isBlank() || convertToNative(entry.getKey()).toString().toLowerCase().startsWith(currentWord.toLowerCase()))
-                .forEach(entry -> newBuilder.suggest(convertToNative(entry.getKey()).toString().substring(currentWord.length()), entry.getValue()));
+                .filter(entry -> currentWord.isBlank() || builder.getRemaining().endsWith(" ") || convertToNative(entry.getKey()).toString().toLowerCase().startsWith(currentWord.toLowerCase()))
+                .forEach(entry -> newBuilder.suggest(convertToNative(entry.getKey()).toString().substring(builder.getRemaining().endsWith(" ") ? 0 : currentWord.length()), entry.getValue()));
         return newBuilder.buildFuture();
     }
 
