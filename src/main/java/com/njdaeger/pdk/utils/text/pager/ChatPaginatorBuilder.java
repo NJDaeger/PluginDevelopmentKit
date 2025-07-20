@@ -1,18 +1,17 @@
 package com.njdaeger.pdk.utils.text.pager;
 
-import com.njdaeger.pdk.utils.text.Text;
 import com.njdaeger.pdk.utils.text.pager.components.IComponent;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 
-import java.util.function.BiFunction;
-
-public class ChatPaginatorBuilder<T, B> {
+public class ChatPaginatorBuilder<T extends PageItem<B>, B> {
 
     private final ChatPaginator<T, B> paginator;
 
-    ChatPaginatorBuilder(BiFunction<T, B, Text.Section> lineGenerator) {
-        this.paginator = new ChatPaginator<>(lineGenerator);
+    public ChatPaginatorBuilder() {
+        this.paginator = new ChatPaginator<>();
     }
 
     /**
@@ -34,7 +33,7 @@ public class ChatPaginatorBuilder<T, B> {
      * @param position The position to add the component to.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> addComponent(Text.Section section, ComponentPosition position) {
+    public ChatPaginatorBuilder<T, B> addComponent(TextComponent section, ComponentPosition position) {
         paginator.addComponent((info, pager, results, page) -> section, position);
         return this;
     }
@@ -47,7 +46,7 @@ public class ChatPaginatorBuilder<T, B> {
      * @return This builder.
      */
     public ChatPaginatorBuilder<T, B> addComponent(String text, ComponentPosition position) {
-        paginator.addComponent((info, pager, results, page) -> Text.of(text), position);
+        paginator.addComponent((info, pager, results, page) -> Component.text(text), position);
         return this;
     }
 
@@ -57,7 +56,7 @@ public class ChatPaginatorBuilder<T, B> {
      * @param highlightColor The color to highlight important information with.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setHighlightColor(Color highlightColor) {
+    public ChatPaginatorBuilder<T, B> setHighlightColor(TextColor highlightColor) {
         paginator.setHighlightColor(highlightColor);
         return this;
     }
@@ -68,9 +67,8 @@ public class ChatPaginatorBuilder<T, B> {
      * @param color The color to highlight important information with.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setHighlightColor(ChatColor color) {
-        if (!color.isColor()) throw new IllegalArgumentException("ChatColor must be a color, not a format.");
-        paginator.setHighlightColor(Color.fromRGB(color.asBungee().getColor().getRGB()));
+    public ChatPaginatorBuilder<T, B> setHighlightColor(NamedTextColor color) {
+        paginator.setHighlightColor(TextColor.color(color.red(), color.green(), color.blue()));
         return this;
     }
 
@@ -83,7 +81,7 @@ public class ChatPaginatorBuilder<T, B> {
      * @return This builder.
      */
     public ChatPaginatorBuilder<T, B> setHighlightColor(int red, int green, int blue) {
-        paginator.setHighlightColor(Color.fromRGB(red, green, blue));
+        paginator.setHighlightColor(TextColor.color(red, green, blue));
         return this;
     }
 
@@ -94,31 +92,30 @@ public class ChatPaginatorBuilder<T, B> {
      * @param grayedOutColor The color to gray out highlighted information with.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setGrayedOutColor(Color grayedOutColor) {
+    public ChatPaginatorBuilder<T, B> setGrayedOutColor(TextColor grayedOutColor) {
         paginator.setGrayedOutColor(grayedOutColor);
         return this;
     }
 
     /**
-     * The default color to effectively "gray out" highlighted information. See {@link #setGrayedOutColor(Color)} for more information.
+     * The default color to effectively "gray out" highlighted information. See {@link #setGrayedOutColor(TextColor)} for more information.
      * @param color The color to gray out highlighted information with.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setGrayedOutColor(ChatColor color) {
-        if (!color.isColor()) throw new IllegalArgumentException("ChatColor must be a color, not a format.");
-        paginator.setGrayedOutColor(Color.fromRGB(color.asBungee().getColor().getRGB()));
+    public ChatPaginatorBuilder<T, B> setGrayedOutColor(NamedTextColor color) {
+        paginator.setGrayedOutColor(TextColor.color(color.red(), color.green(), color.blue()));
         return this;
     }
 
     /**
-     * The default color to effectively "gray out" highlighted information. See {@link #setGrayedOutColor(Color)} for more information.
+     * The default color to effectively "gray out" highlighted information. See {@link #setGrayedOutColor(TextColor)} for more information.
      * @param red The red value of the color.
      * @param green The green value of the color.
      * @param blue The blue value of the color.
      * @return This builder.
      */
     public ChatPaginatorBuilder<T, B> setGrayedOutColor(int red, int green, int blue) {
-        paginator.setGrayedOutColor(Color.fromRGB(red, green, blue));
+        paginator.setGrayedOutColor(TextColor.color(red, green, blue));
         return this;
     }
 
@@ -127,7 +124,7 @@ public class ChatPaginatorBuilder<T, B> {
      * @param grayColor The color to use for non-highlighted information.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setGrayColor(Color grayColor) {
+    public ChatPaginatorBuilder<T, B> setGrayColor(TextColor grayColor) {
         paginator.setGrayColor(grayColor);
         return this;
     }
@@ -137,9 +134,8 @@ public class ChatPaginatorBuilder<T, B> {
      * @param color The color to use for non-highlighted information.
      * @return This builder.
      */
-    public ChatPaginatorBuilder<T, B> setGrayColor(ChatColor color) {
-        if (!color.isColor()) throw new IllegalArgumentException("ChatColor must be a color, not a format.");
-        paginator.setGrayColor(Color.fromRGB(color.asBungee().getColor().getRGB()));
+    public ChatPaginatorBuilder<T, B> setGrayColor(NamedTextColor color) {
+        paginator.setGrayColor(TextColor.color(color.red(), color.green(), color.blue()));
         return this;
     }
 
@@ -151,7 +147,47 @@ public class ChatPaginatorBuilder<T, B> {
      * @return This builder.
      */
     public ChatPaginatorBuilder<T, B> setGrayColor(int red, int green, int blue) {
-        paginator.setGrayColor(Color.fromRGB(red, green, blue));
+        paginator.setGrayColor(TextColor.color(red, green, blue));
+        return this;
+    }
+
+    /**
+     * Set the line wrapping mode for this paginator
+     * @param lineWrappingMode The line wrapping mode for this paginator
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setLineWrappingMode(LineWrappingMode lineWrappingMode) {
+        paginator.setLineWrappingMode(lineWrappingMode);
+        return this;
+    }
+
+    /**
+     * Set the number of equal signs to use in the header and footer. This is split per side. 27 signs is the default per side of the header and footer. So, total length is 44.
+     * @param equalSignCount The number of equal signs to use in the left/right side of the header and footer.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setEqualSignCount(int equalSignCount) {
+        paginator.setEqualSignCount(equalSignCount);
+        return this;
+    }
+
+    /**
+     * Set the chat width in pixels. This is used to determine how many characters can fit on a single line in chat. Default width is 320 pixels.
+     * @param chatWidth The chat width in pixels.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setChatWidthInPixels(int chatWidth) {
+        paginator.setChatWidthInPixels(chatWidth);
+        return this;
+    }
+
+    /**
+     * Set the number of results per page. Default is 8.
+     * @param resultsPerPage The number of results per page.
+     * @return This builder.
+     */
+    public ChatPaginatorBuilder<T, B> setResultsPerPage(int resultsPerPage) {
+        paginator.setResultsPerPage(resultsPerPage);
         return this;
     }
 

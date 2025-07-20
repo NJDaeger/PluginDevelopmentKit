@@ -1,15 +1,16 @@
 package com.njdaeger.pdk.utils.text.pager.components;
 
 import com.njdaeger.pdk.utils.TriFunction;
-import com.njdaeger.pdk.utils.text.Text;
-import com.njdaeger.pdk.utils.text.click.ClickAction;
-import com.njdaeger.pdk.utils.text.click.ClickString;
-import com.njdaeger.pdk.utils.text.hover.HoverAction;
 import com.njdaeger.pdk.utils.text.pager.ChatPaginator;
+import com.njdaeger.pdk.utils.text.pager.PageItem;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 
 import java.util.List;
 
-public class PageNavigationComponent<T, B> implements IComponent<T, B> {
+public class PageNavigationComponent<T extends PageItem<B>, B> implements IComponent<T, B> {
 
     private final TriFunction<B, List<T>, Integer, String> nextPage;
     private final TriFunction<B, List<T>, Integer, String> previousPage;
@@ -27,52 +28,68 @@ public class PageNavigationComponent<T, B> implements IComponent<T, B> {
     }
 
     @Override
-    public Text.Section getText(B generatorInfo, ChatPaginator<T, B> paginator, List<T> results, int page) {
+    public TextComponent getText(B generatorInfo, ChatPaginator<T, B> paginator, List<T> results, int page) {
         int maxPage = (int) Math.ceil(results.size() / 8.0);
-        var component = Text.of("");
+        var component = Component.text();
         if (page > 1) {
-            component.appendRoot("|<--")
-                    .setColor(paginator.getHighlightColor())
-                    .setClickEvent(ClickAction.RUN_COMMAND, ClickString.of(firstPage.apply(generatorInfo, results, page)))
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("Go to the first page").setColor(paginator.getGrayColor()));
-            component.appendRoot(" ");
-            component.appendRoot("<-")
-                    .setColor(paginator.getHighlightColor())
-                    .setClickEvent(ClickAction.RUN_COMMAND, ClickString.of(previousPage.apply(generatorInfo, results, page)))
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("Go to the previous page").setColor(paginator.getGrayColor()));
+            component.append(Component.text()
+                            .content("|<--")
+                            .color(paginator.getHighlightColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("Go to the first page", paginator.getGrayColor())))
+                            .clickEvent(ClickEvent.runCommand(firstPage.apply(generatorInfo, results, page)))
+                    );
+            component.appendSpace();
+            component.append(Component.text()
+                            .content("<-")
+                            .color(paginator.getHighlightColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("Go to the previous page", paginator.getGrayColor())))
+                            .clickEvent(ClickEvent.runCommand(previousPage.apply(generatorInfo, results, page)))
+                    );
         } else {
-            component.appendRoot("|<--")
-                    .setColor(paginator.getGrayedOutColor())
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("You are on the first page").setColor(paginator.getGrayColor()));
-            component.appendRoot(" ");
-            component.appendRoot("<-")
-                    .setColor(paginator.getGrayedOutColor())
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("You are on the first page").setColor(paginator.getGrayColor()));
+            component.append(Component.text()
+                            .content("|<--")
+                            .color(paginator.getGrayedOutColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("You are on the first page", paginator.getGrayColor())))
+                    );
+            component.appendSpace();
+            component.append(Component.text()
+                            .content("<-")
+                            .color(paginator.getGrayedOutColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("You are on the first page", paginator.getGrayColor())))
+                    );
         }
 
-        component.appendRoot(" = ").setColor(paginator.getGrayColor());
-        component.appendRoot("[" + String.format("%-4d/%4d", page, maxPage)).setColor(paginator.getHighlightColor()).append("]");
-        component.appendRoot(" = ").setColor(paginator.getGrayColor());
+        component.append(Component.text(" = ", paginator.getGrayColor()));
+        component.append(Component.text("[" + String.format("%-4d/%4d", page, maxPage) + "]", paginator.getHighlightColor()));
+        component.append(Component.text(" = ", paginator.getGrayColor()));
 
         if (page < maxPage) {
-            component.appendRoot("->")
-                    .setColor(paginator.getHighlightColor())
-                    .setClickEvent(ClickAction.RUN_COMMAND, ClickString.of(nextPage.apply(generatorInfo, results, page)))
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("Go to the next page").setColor(paginator.getGrayColor()));
-            component.appendRoot(" ");
-            component.appendRoot("-->|")
-                    .setColor(paginator.getHighlightColor())
-                    .setClickEvent(ClickAction.RUN_COMMAND, ClickString.of(lastPage.apply(generatorInfo, results, page)))
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("Go to the last page").setColor(paginator.getGrayColor()));
+            component.append(Component.text()
+                            .content("->")
+                            .color(paginator.getHighlightColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("Go to the next page", paginator.getGrayColor())))
+                            .clickEvent(ClickEvent.runCommand(nextPage.apply(generatorInfo, results, page)))
+                    );
+            component.appendSpace();
+            component.append(Component.text()
+                            .content("-->|")
+                            .color(paginator.getHighlightColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("Go to the last page", paginator.getGrayColor())))
+                            .clickEvent(ClickEvent.runCommand(lastPage.apply(generatorInfo, results, page)))
+                    );
         } else {
-            component.appendRoot("->")
-                    .setColor(paginator.getGrayedOutColor())
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("You are on the last page").setColor(paginator.getGrayColor()));
-            component.appendRoot(" ");
-            component.appendRoot("-->|")
-                    .setColor(paginator.getGrayedOutColor())
-                    .setHoverEvent(HoverAction.SHOW_TEXT, Text.of("You are on the last page").setColor(paginator.getGrayColor()));
+            component.append(Component.text()
+                            .content("->")
+                            .color(paginator.getGrayedOutColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("You are on the last page", paginator.getGrayColor())))
+                    );
+            component.appendSpace();
+            component.append(Component.text()
+                            .content("-->|")
+                            .color(paginator.getGrayedOutColor())
+                            .hoverEvent(HoverEvent.showText(Component.text("You are on the last page", paginator.getGrayColor())))
+                    );
         }
-        return component;
+        return component.build();
     }
 }

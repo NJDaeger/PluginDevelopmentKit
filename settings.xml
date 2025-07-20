@@ -10,11 +10,11 @@
         <profile>
             <id>github</id>
             <repositories>
-                <repository>
-                    <id>github</id>
-                    <name>GitHub NJDaeger Apache Maven Packages</name>
-                    <url>https://maven.pkg.github.com/NJDaeger</url>
-                </repository>
+<!--                <repository>-->
+<!--                    <id>github</id>-->
+<!--                    <name>GitHub NJDaeger Apache Maven Packages</name>-->
+<!--                    <url>https://maven.pkg.github.com/NJDaeger</url>-->
+<!--                </repository>-->
             </repositories>
         </profile>
     </profiles>
