@@ -1,6 +1,7 @@
 package com.njdaeger.pdk.command.brigadier.nodes;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -8,15 +9,15 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class PdkCommandNode implements IPdkCommandNode {
+public class PdkCommandNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> implements IPdkCommandNode<EXECUTOR, CTX> {
 
     private final ArgumentBuilder<CommandSourceStack, ?> baseNode;
-    private final ICommandExecutor executor;
-    private final List<IPdkCommandNode> arguments;
+    private final EXECUTOR executor;
+    private final List<IPdkCommandNode<EXECUTOR, CTX>> arguments;
     private final PermissionMode permissionMode;
     private final String[] permissions;
 
-    public PdkCommandNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode) {
+    public PdkCommandNode(EXECUTOR executor, List<IPdkCommandNode<EXECUTOR, CTX>> arguments, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode) {
         this.executor = executor;
         this.arguments = arguments;
         this.permissions = permissions;
@@ -32,12 +33,12 @@ public class PdkCommandNode implements IPdkCommandNode {
     }
 
     @Override
-    public ICommandExecutor getExecutor() {
+    public EXECUTOR getExecutor() {
         return executor;
     }
 
     @Override
-    public List<IPdkCommandNode> getArguments() {
+    public List<IPdkCommandNode<EXECUTOR, CTX>> getArguments() {
         return arguments;
     }
 

@@ -2,9 +2,11 @@ package com.njdaeger.pdk.config.impl;
 
 import com.njdaeger.pdk.config.ConfigType;
 import com.njdaeger.pdk.config.IConfig;
-import org.bukkit.configuration.MemorySection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,15 +19,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class YmlConfig implements IConfig {
+public class YmlConfigurate implements IConfig {
 
     private final Map<String, String> comments;
-    private YamlConfiguration config;
+    private final YamlConfigurationLoader loader;
+    private ConfigurationNode config;
     private final String configName;
     private final Plugin plugin;
     private final File file;
 
-    public YmlConfig(Plugin plugin, String configName) {
+    public YmlConfigurate(Plugin plugin, String configName) {
         this.comments = new HashMap<>();
         this.configName = configName;
         this.plugin = plugin;
@@ -51,10 +54,15 @@ public class YmlConfig implements IConfig {
                 e.printStackTrace();
             }
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
-        this.config.options().header(null);
-        this.config.options().copyHeader(false);
+
+        this.loader = YamlConfigurationLoader.builder().path(file.toPath()).build();
+        try {
+            this.config = loader.load();
+        } catch (ConfigurateException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 
     @Override
     public String getName() {
@@ -63,12 +71,48 @@ public class YmlConfig implements IConfig {
 
     @Override
     public Set<String> getKeys(boolean deep) {
-        return config.getKeys(deep);
+        if (deep) {
+            // For deep traversal, we need to collect all keys including nested ones
+            return getKeysRecursively("", config);
+        } else {
+            // For shallow traversal, just get the direct children's keys
+            return config.childrenMap().keySet().stream()
+                .map(Object::toString)
+                .collect(java.util.stream.Collectors.toSet());
+        }
+    }
+
+    /**
+     * Helper method to recursively collect all keys in the configuration.
+     *
+     * @param prefix The path prefix to prepend to keys
+     * @param node The node to collect keys from
+     * @return A set containing all keys in this node and its children
+     */
+    private Set<String> getKeysRecursively(String prefix, ConfigurationNode node) {
+        Set<String> keys = new java.util.HashSet<>();
+
+        node.childrenMap().forEach((key, childNode) -> {
+            String keyString = key.toString();
+            String fullPath = prefix.isEmpty() ? keyString : prefix + "." + keyString;
+
+            // Add this key
+            keys.add(fullPath);
+
+            // Add all children's keys
+            if (!childNode.isMap()) {
+                return;
+            }
+
+            keys.addAll(getKeysRecursively(fullPath, childNode));
+        });
+
+        return keys;
     }
 
     @Override
     public Object getValue(String path) {
-        return config.get(path);
+        return config.node(getPathArray(path)).raw();
     }
 
     @Override
@@ -78,22 +122,35 @@ public class YmlConfig implements IConfig {
 
     @Override
     public void addEntry(String path, Object value) {
-        if (getValue(path) == null) config.set(path, value);
+        if (!config.hasChild(getPathArray(path))) {
+            try {
+                config.node(getPathArray(path)).set(value);
+            } catch (SerializationException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public void addComment(String path, String comment) {
-        comments.put(path, comment);
+        if (comment != null && !comment.isEmpty()) {
+            comments.put(path, comment);
+        }
     }
 
     @Override
     public void setEntry(String path, Object value) {
-        config.set(path, value);
+        try {
+            config.node(getPathArray(path)).set(value);
+        } catch (SerializationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean isSection(String path) {
-        return getValue(path) != null && getValue(path) instanceof MemorySection;
+        Object value = config.node(getPathArray(path)).raw();
+        return value instanceof ConfigurationNode v && v.isMap();
     }
 
     @Override
@@ -108,13 +165,17 @@ public class YmlConfig implements IConfig {
 
     @Override
     public void reload() {
-        this.config = YamlConfiguration.loadConfiguration(file);
+        try {
+            this.config = loader.load();
+        } catch (ConfigurateException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void save() {
         try {
-            config.save(file);
+            loader.save(config);
 
             List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
             comments.forEach((key, comment) -> {
@@ -136,8 +197,11 @@ public class YmlConfig implements IConfig {
 
             });
             Files.write(file.toPath(), lines);
+
+        } catch (ConfigurateException e) {
+            throw new RuntimeException("Failed to save configuration to file: " + file.getAbsolutePath(), e);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -165,4 +229,7 @@ public class YmlConfig implements IConfig {
         return builder.toString();
     }
 
+    private Object[] getPathArray(String path) {
+        return path.split("\\.");
+    }
 }

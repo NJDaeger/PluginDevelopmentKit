@@ -1,5 +1,7 @@
 package com.njdaeger.pdk.command.brigadier.nodes;
 
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.command.CommandSender;
@@ -10,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public interface IPdkRootNode extends IPdkCommandNode {
+public interface IPdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> extends IPdkCommandNode<EXECUTOR, CTX> {
 
     /**
      * Gets the names of the command. [0] is the primary name.
@@ -52,7 +54,7 @@ public interface IPdkRootNode extends IPdkCommandNode {
      *
      * @return The custom help text for the command.
      */
-    BiFunction<IPdkRootNode, CommandSender, TextComponent> getCustomHelpTextGenerator();
+    BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> getCustomHelpTextGenerator();
 
     /**
      * Registers the command with the plugin.

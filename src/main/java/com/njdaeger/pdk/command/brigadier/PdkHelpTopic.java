@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class PdkHelpTopic extends HelpTopic {
+public class PdkHelpTopic<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> extends HelpTopic {
 
     private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder()
             .character('§')
@@ -26,9 +26,9 @@ public class PdkHelpTopic extends HelpTopic {
             .hexColors()
             .build();
 
-    private final IPdkRootNode rootNode;
+    private final IPdkRootNode<EXECUTOR, CTX> rootNode;
 
-    public PdkHelpTopic(String alias, IPdkRootNode rootNode) {
+    public PdkHelpTopic(String alias, IPdkRootNode<EXECUTOR, CTX> rootNode) {
         this.rootNode = rootNode;
         this.name = alias;
         this.shortText = rootNode.getDescription();
@@ -53,7 +53,7 @@ public class PdkHelpTopic extends HelpTopic {
      * @param rootNode The command's root node
      * @return A BiFunction that generates formatted help text
      */
-    public TextComponent createFormattedHelpText(IPdkRootNode rootNode, CommandSender sender) {
+    public TextComponent createFormattedHelpText(IPdkRootNode<EXECUTOR, CTX> rootNode, CommandSender sender) {
         TextComponent.Builder builder = Component.text();
 
         if (!rootNode.getPrimaryAlias().equalsIgnoreCase(getName())) {
@@ -91,12 +91,12 @@ public class PdkHelpTopic extends HelpTopic {
         return builder.build();
     }
 
-    private static void generateCommandUsage(IPdkCommandNode node, CommandSender sender, TextComponent.Builder builder) {
-        if (node instanceof IPdkRootNode rootNode) {
-            String baseCommand = "/" + rootNode.getPrimaryAlias();
+    private void generateCommandUsage(IPdkCommandNode<EXECUTOR, CTX> node, CommandSender sender, TextComponent.Builder builder) {
+        if (node instanceof IPdkRootNode<EXECUTOR, CTX> localRootNode) {
+            String baseCommand = "/" + localRootNode.getPrimaryAlias();
 
             // For simple commands with few arguments, generate full usage patterns
-            List<String> usagePatterns = buildUsagePatterns(rootNode, sender);
+            List<String> usagePatterns = buildUsagePatterns(localRootNode, sender);
             //order the patterns alphabetically
             usagePatterns.sort(String::compareToIgnoreCase);
             for (String pattern : usagePatterns) {
@@ -106,39 +106,39 @@ public class PdkHelpTopic extends HelpTopic {
         }
     }
 
-    private static List<String> buildUsagePatterns(IPdkRootNode rootNode, CommandSender sender) {
+    private List<String> buildUsagePatterns(IPdkRootNode<EXECUTOR, CTX> rootNode, CommandSender sender) {
         // Simplified pattern generation
         List<String> patterns = new ArrayList<>();
         buildPatterns(rootNode, "", patterns, sender);
         return patterns;
     }
 
-    private static void buildPatterns(IPdkCommandNode node, String currentPattern, List<String> patterns, CommandSender sender) {
+    private void buildPatterns(IPdkCommandNode<EXECUTOR, CTX> node, String currentPattern, List<String> patterns, CommandSender sender) {
         // Add current pattern if node is executable
         if (node.canExecute()) {
             patterns.add(currentPattern.trim());
         }
 
         // Process child arguments
-        for (IPdkCommandNode arg : node.getArguments()) {
+        for (IPdkCommandNode<EXECUTOR, CTX> arg : node.getArguments()) {
             if (!hasPermission(arg, sender)) continue;
             String argPattern = getArgumentPattern(arg);
             buildPatterns(arg, currentPattern + " " + argPattern, patterns, sender);
         }
     }
 
-    private static String getArgumentPattern(IPdkCommandNode node) {
-        if (node instanceof IPdkLiteralNode lit) {
+    private String getArgumentPattern(IPdkCommandNode<EXECUTOR, CTX> node) {
+        if (node instanceof IPdkLiteralNode<EXECUTOR, CTX> lit) {
             return lit.getLiteral();
-        } else if (node instanceof IPdkTypedNode<?> typed) {
+        } else if (node instanceof IPdkTypedNode<?, EXECUTOR, CTX> typed) {
             return "<" + typed.getArgumentName() + ">";
-        } else if (node instanceof IPdkRootNode root) {
+        } else if (node instanceof IPdkRootNode<EXECUTOR, CTX> root) {
             return root.getPrimaryAlias();
         }
         return "";
     }
 
-    private static boolean hasPermission(IPdkCommandNode node, CommandSender sender) {
+    private boolean hasPermission(IPdkCommandNode<EXECUTOR, CTX> node, CommandSender sender) {
         return (node.getPermissions() == null || node.getPermissionMode() == null)
                 || (node.getPermissionMode() == PermissionMode.ANY && Stream.of(node.getPermissions()).anyMatch(sender::hasPermission))
                 || (node.getPermissionMode() == PermissionMode.ALL && Stream.of(node.getPermissions()).allMatch(sender::hasPermission));

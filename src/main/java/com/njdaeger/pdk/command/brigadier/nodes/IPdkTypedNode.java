@@ -1,8 +1,10 @@
 package com.njdaeger.pdk.command.brigadier.nodes;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 
-public interface IPdkTypedNode<T> extends IPdkCommandNode {
+public interface IPdkTypedNode<T, EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> extends IPdkCommandNode<EXECUTOR, CTX> {
 
     /**
      * Gets the name of the argument.

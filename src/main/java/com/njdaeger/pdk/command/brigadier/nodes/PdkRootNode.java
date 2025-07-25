@@ -4,7 +4,11 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.njdaeger.pdk.command.brigadier.AsyncCommandContextImpl;
+import com.njdaeger.pdk.command.brigadier.IAsyncCommandExecutor;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.ISynchCommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PdkHelpTopic;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.flags.FlagFieldArgumentType;
@@ -26,14 +30,14 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
+public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> extends PdkCommandNode<EXECUTOR, CTX> implements IPdkRootNode<EXECUTOR, CTX> {
 
     private final List<IPdkCommandFlag<?>> flags;
     private final String description;
-    private final BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator;
+    private final BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator;
     private final List<String> aliases;
 
-    public PdkRootNode(ICommandExecutor executor, List<IPdkCommandNode> arguments, List<IPdkCommandFlag<?>> flags, String description, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
+    public PdkRootNode(EXECUTOR executor, List<IPdkCommandNode<EXECUTOR, CTX>> arguments, List<IPdkCommandFlag<?>> flags, String description, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
         super(executor, arguments, permissionMode, permissions, baseNode);
         this.flags = flags;
         this.aliases = List.of(aliases);
@@ -57,7 +61,7 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
     }
 
     @Override
-    public BiFunction<IPdkRootNode, CommandSender, TextComponent> getCustomHelpTextGenerator() {
+    public BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> getCustomHelpTextGenerator() {
         return customHelpTextGenerator;
     }
 
@@ -67,64 +71,75 @@ public class PdkRootNode extends PdkCommandNode implements IPdkRootNode {
         var rootNode = getBaseNode();
 
         if (getExecutor() != null) {
-            if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+            if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
             else {
-                rootNode.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()))))
-                        .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
+                rootNode.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()))))
+                        .executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
 //                rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor())))
 //                        .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
             }
         }
         
-        getArguments().forEach(arg -> addArgument(rootNode, arg));
+        getArguments().forEach(arg -> addArgument(plugin, rootNode, arg));
         
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, e -> {
             var registrar = e.registrar();
-            getAliases().forEach(alias -> Bukkit.getHelpMap().addTopic(new PdkHelpTopic(alias, this)));
+            getAliases().forEach(alias -> Bukkit.getHelpMap().addTopic(new PdkHelpTopic<>(alias, this)));
             registrar.register((LiteralCommandNode<CommandSourceStack>) rootNode.build(), getDescription(), getAliases());
         });
     }
 
-    private void addArgument(ArgumentBuilder<CommandSourceStack, ?> parentArgument, IPdkCommandNode newArgument) {
+    private void addArgument(Plugin plugin, ArgumentBuilder<CommandSourceStack, ?> parentArgument, IPdkCommandNode<EXECUTOR, CTX> newArgument) {
         final ArgumentBuilder<CommandSourceStack, ?> arg = newArgument.getBaseNode();
 
         newArgument.getArguments().forEach(childArg -> {
-            if (childArg instanceof IPdkTypedNode<?> tArg && tArg.getArgumentType() instanceof FlagFieldArgumentType) return;
-            else addArgument(arg, childArg);
+            if (childArg instanceof IPdkTypedNode<?, EXECUTOR, CTX> tArg && tArg.getArgumentType() instanceof FlagFieldArgumentType) return;
+            else addArgument(plugin, arg, childArg);
         });
 
         //if the new argument is executable,
         if (newArgument.getExecutor() != null) {
             //flags are not compatible with greedy string arguments
-            if (flags.isEmpty() || (newArgument instanceof IPdkTypedNode<?> tArg && (tArg.getArgumentType() instanceof GreedyStringArgument || (tArg.getArgumentType() instanceof StringArgumentType stArg && stArg.getType() == StringArgumentType.StringType.GREEDY_PHRASE))))
-                arg.executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+            if (flags.isEmpty() || (newArgument instanceof IPdkTypedNode<?, EXECUTOR, CTX> tArg && (tArg.getArgumentType() instanceof GreedyStringArgument || (tArg.getArgumentType() instanceof StringArgumentType stArg && stArg.getType() == StringArgumentType.StringType.GREEDY_PHRASE))))
+                arg.executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
             else {
-                arg.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()))))
-                        .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
-
-//                arg.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor())))
-//                        .executes(commandExecutionWrapper(newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
+                arg.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()))))
+                        .executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
             }
         }
 
         parentArgument.then(arg);
     }
 
-    private static Command<CommandSourceStack> commandExecutionWrapper(PermissionMode permissionMode, String[] permissions, ICommandExecutor executor) {
+    private Command<CommandSourceStack> commandExecutionWrapper(Plugin plugin, PermissionMode permissionMode, String[] permissions, EXECUTOR executor) {
         return (ctx) -> {
             try {
-                if (permissions != null
-                        && permissions.length > 0
-                        && permissionMode != null
-                        && ((permissionMode == PermissionMode.ANY && Stream.of(permissions).noneMatch(ctx.getSource().getSender()::hasPermission))
-                            || (permissionMode == PermissionMode.ALL && Stream.of(permissions).anyMatch(permission -> !ctx.getSource().getSender().hasPermission(permission)))
-                        )
-                    ) throw new PermissionDeniedException();
-                executor.execute(new CommandContextImpl(ctx));
+                if (permissions != null && permissions.length > 0 && permissionMode != null) {
+                    if (permissionMode == PermissionMode.ANY && Stream.of(permissions).noneMatch(ctx.getSource().getSender()::hasPermission)) {
+                        throw new PermissionDeniedException();
+                    } else if (permissionMode == PermissionMode.ALL && Stream.of(permissions).anyMatch(permission -> !ctx.getSource().getSender().hasPermission(permission))) {
+                        throw new PermissionDeniedException();
+                    }
+                }
+
+                if (executor instanceof ISynchCommandExecutor syncExecutor) {
+                    syncExecutor.execute(new CommandContextImpl(ctx));
+                } else if (executor instanceof IAsyncCommandExecutor asyncExecutor) {
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        try {
+                            asyncExecutor.execute(new AsyncCommandContextImpl(ctx));
+                        } catch (PDKCommandException e) {
+                            e.showError(ctx.getSource().getSender());
+                        }
+                    });
+                }
+
             } catch (PDKCommandException e) {
                 e.showError(ctx.getSource().getSender());
+                return Command.SINGLE_SUCCESS;
             }
             return Command.SINGLE_SUCCESS;
         };
     }
+
 }
