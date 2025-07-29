@@ -3,7 +3,6 @@ package com.njdaeger.pdk.command.brigadier.arguments;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
