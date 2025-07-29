@@ -22,7 +22,7 @@ public abstract class AbstractFixedTypedArgument<TYPE, FIXED_NUMERIC> extends Ba
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
+        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
         var current = builder.getRemaining();
         var completingAt = builder.getStart() + ((current.contains("-") && min < 0) ? current.lastIndexOf("-") + 1 : 0);
         var newBuilder = builder.createOffset(completingAt);

@@ -3,6 +3,7 @@ package com.njdaeger.pdk.command.brigadier.builder;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 
 import java.util.ArrayList;
@@ -16,10 +17,12 @@ public abstract class BasePdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommand
     protected EXECUTOR defaultExecutor;
     protected final PARENT_NODE parentNode;
     protected final List<IPdkCommandNodeBuilder<?, CURRENT_NODE, EXECUTOR, CTX>> childrenNodes;
+    protected IContextGenerator<CTX> contextGenerator;
 
-    public BasePdkCommandNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode) {
+    public BasePdkCommandNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode, IContextGenerator<CTX> contextGenerator) {
         this.childrenNodes = new ArrayList<>();
         this.defaultExecutor = defaultExecutor;
+        this.contextGenerator = contextGenerator;
         this.parentNode = parentNode;
     }
 
@@ -52,14 +55,14 @@ public abstract class BasePdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommand
 
     @Override
     public IPdkLiteralNodeBuilder<CURRENT_NODE, EXECUTOR, CTX> then(String literal) {
-        var literalNode = new PdkLiteralNodeBuilder<>(defaultExecutor, this, literal);
+        var literalNode = new PdkLiteralNodeBuilder<>(defaultExecutor, this, literal, contextGenerator);
         childrenNodes.add((IPdkLiteralNodeBuilder<CURRENT_NODE, EXECUTOR, CTX>) literalNode);
         return (IPdkLiteralNodeBuilder<CURRENT_NODE, EXECUTOR, CTX>) literalNode;
     }
 
     @Override
     public <T> IPdkTypedNodeBuilder<CURRENT_NODE, T, EXECUTOR, CTX> then(String argument, ArgumentType<T> argumentType) {
-        var argumentNode = new PdkTypedNodeBuilder<>(defaultExecutor, this, argument, argumentType);
+        var argumentNode = new PdkTypedNodeBuilder<>(defaultExecutor, this, argument, argumentType, contextGenerator);
         childrenNodes.add((IPdkTypedNodeBuilder<CURRENT_NODE, T, EXECUTOR, CTX>) argumentNode);
         return (IPdkTypedNodeBuilder<CURRENT_NODE, T, EXECUTOR, CTX>) argumentNode;
     }

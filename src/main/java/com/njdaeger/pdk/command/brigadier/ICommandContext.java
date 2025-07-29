@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,12 @@ import java.util.stream.Stream;
  *
  */
 public interface ICommandContext {
+
+    /**
+     * Get the plugin that registered this command
+     * @return The plugin that registered this command
+     */
+    Plugin getPlugin();
 
     /**
      * Check if a flag has been used in this command execution.

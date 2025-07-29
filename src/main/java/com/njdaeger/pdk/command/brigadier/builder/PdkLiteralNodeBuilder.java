@@ -2,6 +2,7 @@ package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkLiteralNode;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkLiteralNode;
@@ -14,8 +15,8 @@ public class PdkLiteralNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?,
 
     private final String literal;
 
-    public PdkLiteralNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode, String literal) {
-        super(defaultExecutor, parentNode);
+    public PdkLiteralNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode, String literal, IContextGenerator<CTX> contextGenerator) {
+        super(defaultExecutor, parentNode, contextGenerator);
         this.literal = literal;
         this.permissions = parentNode.getPermissions();
         this.permissionMode = parentNode.getPermissionMode();

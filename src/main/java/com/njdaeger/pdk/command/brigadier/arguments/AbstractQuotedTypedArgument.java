@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,7 @@ public abstract class AbstractQuotedTypedArgument<TYPE> extends BasePdkArgumentT
 
     @Override
     public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        var quotedSuggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
+        var quotedSuggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
         var current = builder.getRemaining();
         var startsWithQuote = current.startsWith("\"");
         var currentWithoutQuotes = startsWithQuote ? current.substring(1) : current;

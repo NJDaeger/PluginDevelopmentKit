@@ -3,7 +3,9 @@ package com.njdaeger.pdk.command.brigadier.builder;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
+import com.njdaeger.pdk.command.brigadier.arguments.IPdkArgumentType;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkTypedNode;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkTypedNode;
 import io.papermc.paper.command.brigadier.Commands;
@@ -16,8 +18,8 @@ public class PdkTypedNodeBuilder<PARENT_NODE extends IPdkCommandNodeBuilder<?, ?
     private final String argumentName;
     private final ArgumentType<T> argumentType;
 
-    public PdkTypedNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode, String argumentName, ArgumentType<T> argumentType) {
-        super(defaultExecutor, parentNode);
+    public PdkTypedNodeBuilder(EXECUTOR defaultExecutor, PARENT_NODE parentNode, String argumentName, ArgumentType<T> argumentType, IContextGenerator<CTX> contextGenerator) {
+        super(defaultExecutor, parentNode, contextGenerator);
         this.argumentName = argumentName;
         this.argumentType = argumentType;
         this.permissions = parentNode.getPermissions();

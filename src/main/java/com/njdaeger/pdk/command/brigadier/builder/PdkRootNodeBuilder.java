@@ -1,16 +1,20 @@
 package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkRootNode;
 import com.njdaeger.pdk.command.brigadier.flags.PdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.nodes.PdkRootNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +28,8 @@ public class PdkRootNodeBuilder<EXECUTOR extends ICommandExecutor<CTX>, CTX exte
     private final List<IPdkCommandFlag<?>> commandFlags;
     private BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator;
 
-    public PdkRootNodeBuilder(String[] aliases) {
-        super((ctx) -> ctx.error("There is no default command executor defined."), null);
+    public PdkRootNodeBuilder(String[] aliases, EXECUTOR defaultExecutor, IContextGenerator<CTX> contextGenerator) {
+        super(defaultExecutor, null, contextGenerator);
         this.commandFlags = new ArrayList<>();
         this.aliases = aliases;
     }
@@ -112,6 +116,6 @@ public class PdkRootNodeBuilder<EXECUTOR extends ICommandExecutor<CTX>, CTX exte
     @Override
     public IPdkRootNode<EXECUTOR, CTX> build() {
         var children = childrenNodes.stream().map(IPdkCommandNodeBuilder::build).collect(Collectors.toCollection(ArrayList::new));
-        return new PdkRootNode<>(commandExecutor, children, commandFlags, description, permissionMode, permissions, Commands.literal(aliases[0]), customHelpTextGenerator, aliases);
+        return new PdkRootNode<>(commandExecutor, children, commandFlags, description, permissionMode, permissions, Commands.literal(aliases[0]), customHelpTextGenerator, aliases, contextGenerator);
     }
 }

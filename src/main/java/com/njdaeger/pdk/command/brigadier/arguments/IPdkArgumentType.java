@@ -4,9 +4,11 @@ import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +16,19 @@ import java.util.List;
 import java.util.Map;
 
 public interface IPdkArgumentType<CUSTOM, NATIVE> extends CustomArgumentType<CUSTOM, NATIVE> {
+
+    /**
+     * Returns the plugin that registered the command being used
+     * @return The plugin that registered the command.
+     */
+    Plugin getPlugin();
+
+    /**
+     * Sets the context generator supplier
+     * @param plugin The plugin that registered the command.
+     * @param generator The context generator to use for this argument type.
+     */
+    void setContextGenerator(Plugin plugin, IContextGenerator<?> generator);
 
     /**
      * Returns a list of basic suggestions. All tooltips will be the default tooltip message provided by {@link #getDefaultTooltipMessage()}.

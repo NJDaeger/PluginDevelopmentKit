@@ -3,14 +3,18 @@ package com.njdaeger.pdk.command.brigadier.nodes;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.njdaeger.pdk.command.brigadier.AsyncCommandContextImpl;
+import com.njdaeger.pdk.command.brigadier.IAsyncCommandContext;
 import com.njdaeger.pdk.command.brigadier.IAsyncCommandExecutor;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
-import com.njdaeger.pdk.command.brigadier.ISynchCommandExecutor;
+import com.njdaeger.pdk.command.brigadier.IContextGenerator;
+import com.njdaeger.pdk.command.brigadier.ISyncCommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PdkHelpTopic;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
+import com.njdaeger.pdk.command.brigadier.arguments.IPdkArgumentType;
 import com.njdaeger.pdk.command.brigadier.flags.FlagFieldArgumentType;
 import com.njdaeger.pdk.command.brigadier.arguments.defaults.GreedyStringArgument;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
@@ -35,13 +39,15 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
     private final List<IPdkCommandFlag<?>> flags;
     private final String description;
     private final BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator;
+    private final IContextGenerator<CTX> contextGenerator;
     private final List<String> aliases;
 
-    public PdkRootNode(EXECUTOR executor, List<IPdkCommandNode<EXECUTOR, CTX>> arguments, List<IPdkCommandFlag<?>> flags, String description, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases) {
+    public PdkRootNode(EXECUTOR executor, List<IPdkCommandNode<EXECUTOR, CTX>> arguments, List<IPdkCommandFlag<?>> flags, String description, PermissionMode permissionMode, String[] permissions, ArgumentBuilder<CommandSourceStack, ?> baseNode, BiFunction<IPdkRootNode<EXECUTOR, CTX>, CommandSender, TextComponent> customHelpTextGenerator, String[] aliases, IContextGenerator<CTX> contextGenerator) {
         super(executor, arguments, permissionMode, permissions, baseNode);
         this.flags = flags;
         this.aliases = List.of(aliases);
         this.description = description;
+        this.contextGenerator = contextGenerator;
         this.customHelpTextGenerator = customHelpTextGenerator;
     }
 
@@ -73,10 +79,11 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
         if (getExecutor() != null) {
             if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
             else {
-                rootNode.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()))))
+                var ffArg = new FlagFieldArgumentType(flags);
+                ffArg.setContextGenerator(plugin, contextGenerator);
+                rootNode.then(Commands.literal("flags:")
+                                .then(Commands.argument("flags", ffArg).executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()))))
                         .executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
-//                rootNode.then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor())))
-//                        .executes(commandExecutionWrapper(getPermissionMode(), getPermissions(), getExecutor()));
             }
         }
         
@@ -90,6 +97,7 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
     }
 
     private void addArgument(Plugin plugin, ArgumentBuilder<CommandSourceStack, ?> parentArgument, IPdkCommandNode<EXECUTOR, CTX> newArgument) {
+        if (newArgument instanceof IPdkTypedNode<?,EXECUTOR, CTX> typedNode && typedNode.getArgumentType() instanceof IPdkArgumentType<?,?> typedArg) typedArg.setContextGenerator(plugin, contextGenerator);
         final ArgumentBuilder<CommandSourceStack, ?> arg = newArgument.getBaseNode();
 
         newArgument.getArguments().forEach(childArg -> {
@@ -122,12 +130,12 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
                     }
                 }
 
-                if (executor instanceof ISynchCommandExecutor syncExecutor) {
-                    syncExecutor.execute(new CommandContextImpl(ctx));
+                if (executor instanceof ISyncCommandExecutor syncExecutor) {
+                    syncExecutor.execute(contextGenerator.generateContext(plugin, ctx));
                 } else if (executor instanceof IAsyncCommandExecutor asyncExecutor) {
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                         try {
-                            asyncExecutor.execute(new AsyncCommandContextImpl(ctx));
+                            asyncExecutor.execute((IAsyncCommandContext) contextGenerator.generateContext(plugin, ctx));
                         } catch (PDKCommandException e) {
                             e.showError(ctx.getSource().getSender());
                         }
