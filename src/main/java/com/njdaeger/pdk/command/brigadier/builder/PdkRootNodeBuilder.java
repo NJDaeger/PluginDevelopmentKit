@@ -6,6 +6,7 @@ import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.IContextGenerator;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
+import com.njdaeger.pdk.command.brigadier.arguments.IPdkArgumentType;
 import com.njdaeger.pdk.command.brigadier.flags.IPdkCommandFlag;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkRootNode;
 import com.njdaeger.pdk.command.brigadier.flags.PdkCommandFlag;

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+@SuppressWarnings("UnstableApiUsage")
 public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> extends PdkCommandNode<EXECUTOR, CTX> implements IPdkRootNode<EXECUTOR, CTX> {
 
     private final List<IPdkCommandFlag<?>> flags;
@@ -75,11 +76,14 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
     public void register(Plugin plugin) {
 
         var rootNode = getBaseNode();
+        var flagsWithContext = flags.stream().peek(flag -> {
+            if (flag.getType() instanceof IPdkArgumentType<?, ?> argType) argType.setContextGenerator(plugin, contextGenerator);
+        }).toList();
 
         if (getExecutor() != null) {
-            if (flags.isEmpty()) rootNode.executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
+            if (flagsWithContext.isEmpty()) rootNode.executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()));
             else {
-                var ffArg = new FlagFieldArgumentType(flags);
+                var ffArg = new FlagFieldArgumentType(flagsWithContext);
                 ffArg.setContextGenerator(plugin, contextGenerator);
                 rootNode.then(Commands.literal("flags:")
                                 .then(Commands.argument("flags", ffArg).executes(commandExecutionWrapper(plugin, getPermissionMode(), getPermissions(), getExecutor()))))
@@ -111,7 +115,14 @@ public class PdkRootNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICo
             if (flags.isEmpty() || (newArgument instanceof IPdkTypedNode<?, EXECUTOR, CTX> tArg && (tArg.getArgumentType() instanceof GreedyStringArgument || (tArg.getArgumentType() instanceof StringArgumentType stArg && stArg.getType() == StringArgumentType.StringType.GREEDY_PHRASE))))
                 arg.executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
             else {
-                arg.then(Commands.literal("flags:").then(Commands.argument("flags", new FlagFieldArgumentType(flags)).executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()))))
+
+                var flagsWithContext = flags.stream().peek(flag -> {
+                    if (flag.getType() instanceof IPdkArgumentType<?, ?> argType) argType.setContextGenerator(plugin, contextGenerator);
+                }).toList();
+
+                var ffArg = new FlagFieldArgumentType(flagsWithContext);
+                ffArg.setContextGenerator(plugin, contextGenerator);
+                arg.then(Commands.literal("flags:").then(Commands.argument("flags", ffArg).executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()))))
                         .executes(commandExecutionWrapper(plugin, newArgument.getPermissionMode(), newArgument.getPermissions(), newArgument.getExecutor()));
             }
         }

@@ -155,7 +155,7 @@ public class YmlConfigurate implements IConfig {
 
     @Override
     public ConfigType<?> getType() {
-        return ConfigType.YML;
+        return ConfigType.YML_CONFIGURATE;
     }
 
     @Override
