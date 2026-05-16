@@ -3,8 +3,10 @@ package com.njdaeger.pdk.config.impl;
 import com.njdaeger.pdk.config.ConfigType;
 import com.njdaeger.pdk.config.IConfig;
 import org.bukkit.plugin.Plugin;
+import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
@@ -22,11 +24,12 @@ import java.util.regex.Pattern;
 public class YmlConfigurate implements IConfig {
 
     private final Map<String, String> comments;
-    private final YamlConfigurationLoader loader;
     private ConfigurationNode config;
     private final String configName;
     private final Plugin plugin;
     private final File file;
+
+    private final ConfigurationLoader<CommentedConfigurationNode> commentedLoader;
 
     public YmlConfigurate(Plugin plugin, String configName) {
         this.comments = new HashMap<>();
@@ -55,9 +58,9 @@ public class YmlConfigurate implements IConfig {
             }
         }
 
-        this.loader = YamlConfigurationLoader.builder().path(file.toPath()).build();
+        this.commentedLoader = YamlConfigurationLoader.builder().path(file.toPath()).build();
         try {
-            this.config = loader.load();
+            this.config = commentedLoader.load();
         } catch (ConfigurateException e) {
             throw new RuntimeException(e);
         }
@@ -149,8 +152,9 @@ public class YmlConfigurate implements IConfig {
 
     @Override
     public boolean isSection(String path) {
-        Object value = config.node(getPathArray(path)).raw();
-        return value instanceof ConfigurationNode v && v.isMap();
+        var node = config.node(getPathArray(path));
+        if (node.isNull() || node.virtual()) return false;
+        return node.isMap();
     }
 
     @Override
@@ -166,7 +170,7 @@ public class YmlConfigurate implements IConfig {
     @Override
     public void reload() {
         try {
-            this.config = loader.load();
+            this.config = commentedLoader.load();
         } catch (ConfigurateException e) {
             throw new RuntimeException(e);
         }
@@ -175,7 +179,7 @@ public class YmlConfigurate implements IConfig {
     @Override
     public void save() {
         try {
-            loader.save(config);
+            commentedLoader.save(config);
 
             List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
             comments.forEach((key, comment) -> {
