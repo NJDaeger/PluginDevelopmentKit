@@ -20,6 +20,7 @@ public class ServiceProviderBuilder {
 
     private final Map<Class<?>, Pair<Class<?>, Function<IServiceProvider, ?>>> transients = new HashMap<>();
     private final Map<Class<?>, Pair<Class<?>, Function<IServiceProvider, ?>>> singletons = new HashMap<>();
+    private String providerName = "";
 
     /**
      * Creates a new service provider builder.
@@ -27,6 +28,37 @@ public class ServiceProviderBuilder {
      */
     public static ServiceProviderBuilder builder() {
         return new ServiceProviderBuilder();
+    }
+
+    /**
+     * Creates a new service provider builder with a parent service provider. Every service in the parent that is not overridden in this service provider will be available to this service provider
+     * @param parent The parent service provider.
+     * @return The service provider builder.
+     */
+    public static ServiceProviderBuilder builder(IServiceProvider parent) {
+        ServiceProviderBuilder builder = new ServiceProviderBuilder();
+        parent.getSingletons().forEach((key, obj) -> builder.addTransient((Class)key, (s) -> obj));
+        parent.getTransients().forEach((key, func) -> builder.addTransient((Class)key, func));
+        return builder;
+    }
+
+    /**
+     * Creates a new service provider builder with a name.
+     * @param providerName The name of the service provider.
+     * @return The service provider builder.
+     */
+    public static ServiceProviderBuilder builder(String providerName) {
+        var builder = new ServiceProviderBuilder();
+        builder.providerName = providerName;
+        return builder;
+    }
+
+    public static ServiceProviderBuilder builder(String providerName, IServiceProvider parent) {
+        ServiceProviderBuilder builder = new ServiceProviderBuilder();
+        parent.getSingletons().forEach((key, obj) -> builder.addTransient((Class)key, (s) -> obj));
+        parent.getTransients().forEach((key, func) -> builder.addTransient((Class)key, func));
+        builder.providerName = providerName;
+        return builder;
     }
 
     /**
@@ -82,10 +114,11 @@ public class ServiceProviderBuilder {
 
     /**
      * Builds the service provider.
+     * @param plugin The plugin instance.
      * @return The built service provider.
      */
     public IServiceProvider build(Plugin plugin) {
-        return new ServiceProvider(plugin, orderSingletonsInLoadOrder(), orderTransientsInLoadOrder());
+        return new ServiceProvider(plugin, providerName, orderSingletonsInLoadOrder(), orderTransientsInLoadOrder());
     }
 
     /**
@@ -115,9 +148,9 @@ public class ServiceProviderBuilder {
                 ordered.put(intf, pair.getSecond());
             } else {
                 //if we were unable to be loaded with currently loaded classes, check if we can be loaded AT ALL. Checking the transient classes here can show if we are missing a scoped dependency.
-                if (!canBeLoaded(params, transients.keySet())) throw new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because there are missing transient dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !transients.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+                if (!canBeLoaded(params, transients.keySet())) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing transient dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !transients.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
                 //if we have already tried to load this class and STILL failed, then we have a circular dependency.
-                if (recursiveIndicator == intf) throw new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because it has a circular dependency.");
+                if (recursiveIndicator == intf) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because it has a circular dependency.");
                 toLoad.addFirst(intf);
                 recursiveIndicator = intf;
             }
@@ -149,8 +182,8 @@ public class ServiceProviderBuilder {
             if (canBeLoaded(params, ordered.stream().map(Pair::getFirst).collect(Collectors.toSet()))) {
                 ordered.push(Pair.of(intf, pair.getSecond()));
             } else {
-                if (!canBeLoaded(params, singletons.keySet())) throw new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because there are missing singleton dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !singletons.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
-                if (recursiveIndicator == intf) throw new RuntimeException("Cannot instantiate " + intf.getSimpleName() + " because it has a circular dependency.");
+                if (!canBeLoaded(params, singletons.keySet())) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing singleton dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !singletons.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+                if (recursiveIndicator == intf) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + intf.getSimpleName() + " because it has a circular dependency.");
                 toLoad.add(0, intf);
                 recursiveIndicator = intf;
             }
@@ -178,21 +211,25 @@ public class ServiceProviderBuilder {
      * @param <I> The service implementation
      * @return A function that will instantiate the class.
      */
-    private static <S, I extends S> Function<IServiceProvider, S> generationFunction(Class<I> serviceImplementation) {
-        var constructor = Arrays.stream(serviceImplementation.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("Cannot instantiate " + serviceImplementation.getSimpleName() + " because it has no public constructors."));
+    private <S, I extends S> Function<IServiceProvider, S> generationFunction(Class<I> serviceImplementation) {
+        var constructor = Arrays.stream(serviceImplementation.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + serviceImplementation.getSimpleName() + " because it has no public constructors."));
         return (s) -> {
             var params = constructor.getParameters();
             var args = new Object[params.length];
             for (int i = 0; i < params.length; i++) {
                 var param = params[i];
                 var paramType = param.getType();
-                args[i] = s.getRequiredService(paramType);
+                var paramAnnotations = param.getAnnotations();
+                //if it has a @Nullable annotation, we will try to get the service, but if it is not found, we will pass null.
+                if (Arrays.stream(paramAnnotations).anyMatch(a -> a.annotationType().getSimpleName().equalsIgnoreCase("nullable")))
+                    args[i] = s.getService(paramType);
+                else args[i] = s.getRequiredService(paramType);
             }
             try {
                 return (S) constructor.newInstance(args);
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new RuntimeException("Failed to instantiate " + serviceImplementation.getSimpleName() + " because of an exception.", e);
+                throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Failed to instantiate " + serviceImplementation.getSimpleName() + " because of an exception.", e);
             }
         };
     }

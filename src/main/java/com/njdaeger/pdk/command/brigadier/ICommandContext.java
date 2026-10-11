@@ -62,6 +62,15 @@ public interface ICommandContext {
     <T> T getFlag(String flag, T defaultValue);
 
     /**
+     * Get the value of a flag as it was passed into the command execution. This will return the raw string value of the flag as it was passed in, without any parsing or type conversion.
+     * @param flag The flag to get the value of
+     * @return The raw string value of the flag, or null if the flag does not exist
+     */
+    @Nullable
+    @Contract(pure = true, value = "null -> fail")
+    String getRawFlag(String flag);
+
+    /**
      * Get all the flags that were used in this command execution
      * @return A map of all the flags and their values
      */

@@ -91,6 +91,11 @@ public class CommandContextImpl implements ICommandContext {
     }
 
     @Override
+    public @Nullable String getRawFlag(String flag) {
+        return flagMap.getRawFlagValue(flag);
+    }
+
+    @Override
     public @NotNull Map<String, Object> getFlags() {
         return flagMap.getFlags();
     }

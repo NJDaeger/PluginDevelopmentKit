@@ -16,11 +16,13 @@ public class ServiceProvider implements IServiceProvider {
     private final Plugin plugin;
     private final Map<Class<?>, Object> singletons;
     private final Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions;
+    private final String providerName;
 
-    public ServiceProvider(Plugin plugin, Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> singletons, Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions) {
+    public ServiceProvider(Plugin plugin, String providerName, Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> singletons, Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions) {
         this.singletons = new ConcurrentHashMap<>();
         this.generatorFunctions = new ConcurrentHashMap<>(generatorFunctions);
         this.plugin = plugin;
+        this.providerName = providerName == null || providerName.isBlank() ? "" : providerName + " ";
         loadSingletons(singletons);
     }
 
@@ -38,7 +40,7 @@ public class ServiceProvider implements IServiceProvider {
         });
         if (!retryStack.isEmpty()) {
             if (retryStack.size() == singletons.size()) {
-                throw new RuntimeException("Failed to initialize singletons because they all tried to grab a service that has not been loaded.");
+                throw new RuntimeException("[" + providerName + "ServiceProvider] Failed to initialize singletons because they all tried to grab a service that has not been loaded.");
             }
             loadSingletons(retryStack);
         }
@@ -47,7 +49,7 @@ public class ServiceProvider implements IServiceProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <S> S getService(Class<S> serviceClass) {
-        if (serviceClass == null) throw new IllegalArgumentException("Service class cannot be null.");
+        if (serviceClass == null) throw new IllegalArgumentException("[" + providerName + "ServiceProvider] Service class cannot be null.");
         if (serviceClass == IServiceProvider.class) return (S) this;
         if (serviceClass == Plugin.class) return (S) plugin;
         if (singletons.containsKey(serviceClass)) return (S) singletons.get(serviceClass);
@@ -58,27 +60,41 @@ public class ServiceProvider implements IServiceProvider {
     @Override
     public <S> S getRequiredService(Class<S> serviceClass) {
         var service = getService(serviceClass);
-        if (service == null) throw new RuntimeException("Unknown service requested. " + serviceClass.getSimpleName() + " is not registered.");
+        if (service == null) throw new RuntimeException("[" + providerName + "ServiceProvider] Unknown service requested. " + serviceClass.getSimpleName() + " is not registered.");
         return service;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <C> C initialize(Class<C> clazz) {
-        if (clazz == null) throw new IllegalArgumentException("Class cannot be null.");
-        var constructor = Arrays.stream(clazz.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("Cannot instantiate " + clazz.getSimpleName() + " because it has no public constructors."));
+        if (clazz == null) throw new IllegalArgumentException("[" + providerName + "ServiceProvider] Class cannot be null.");
+        var constructor = Arrays.stream(clazz.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("[" + providerName + "ServiceProvider] Cannot instantiate " + clazz.getSimpleName() + " because it has no public constructors."));
         var params = constructor.getParameters();
         var args = new Object[params.length];
         for (int i = 0; i < params.length; i++) {
             var param = params[i];
             var paramType = param.getType();
-            args[i] = getRequiredService(paramType);
+            var paramAnnotations = param.getAnnotations();
+            //if it has a @Nullable annotation, we will try to get the service, but if it is not found, we will pass null.
+            if (Arrays.stream(paramAnnotations).anyMatch(a -> a.annotationType().getSimpleName().equalsIgnoreCase("nullable")))
+                args[i] = getService(paramType);
+            else args[i] = getRequiredService(paramType);
         }
         try {
             return (C) constructor.newInstance(args);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to instantiate " + clazz.getSimpleName() + " because of an exception.", e);
+            throw new RuntimeException("[" + providerName + "ServiceProvider] Failed to instantiate " + clazz.getSimpleName() + " because of an exception.", e);
         }
+    }
+
+    @Override
+    public Map<Class<?>, Object> getSingletons() {
+        return Map.copyOf(singletons);
+    }
+
+    @Override
+    public Map<Class<?>, Function<IServiceProvider, ?>> getTransients() {
+        return Map.copyOf(generatorFunctions);
     }
 
 }
