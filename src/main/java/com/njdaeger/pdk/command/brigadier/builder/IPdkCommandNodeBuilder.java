@@ -1,11 +1,12 @@
 package com.njdaeger.pdk.command.brigadier.builder;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import com.njdaeger.pdk.command.brigadier.nodes.IPdkCommandNode;
 
-public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuilder<?, ?>, PARENT_NODE> {
+public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuilder<?, ?, EXECUTOR, CTX>, PARENT_NODE, EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> {
 
     /**
      * Sets the permission for this node. Requires the user has all the permissions listed to run this branch.
@@ -34,7 +35,7 @@ public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuil
      * @param commandExecutor The executor to execute.
      * @return The current node.
      */
-    CURRENT_NODE canExecute(ICommandExecutor commandExecutor);
+    CURRENT_NODE canExecute(EXECUTOR commandExecutor);
 
     /**
      * Allows this node to be an execution path and will execute the default executor. This will also return the parent node and end the current node.
@@ -47,7 +48,7 @@ public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuil
      * @param commandExecutor The executor to execute.
      * @return The parent node.
      */
-    PARENT_NODE executes(ICommandExecutor commandExecutor);
+    PARENT_NODE executes(EXECUTOR commandExecutor);
 
     /**
      * Ends the current node and returns the parent node.
@@ -60,7 +61,7 @@ public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuil
      * @param literal The literal to add.
      * @return The literal node builder.
      */
-    IPdkLiteralNodeBuilder<CURRENT_NODE> then(String literal);
+    IPdkLiteralNodeBuilder<CURRENT_NODE, EXECUTOR, CTX> then(String literal);
 
     /**
      * Adds a typed node child node to the current node.
@@ -69,13 +70,13 @@ public interface IPdkCommandNodeBuilder<CURRENT_NODE extends IPdkCommandNodeBuil
      * @param <T> The type of the argument.
      * @return The typed node builder.
      */
-    <T> IPdkTypedNodeBuilder<CURRENT_NODE, T> then(String argument, ArgumentType<T> argumentType);
+    <T> IPdkTypedNodeBuilder<CURRENT_NODE, T, EXECUTOR, CTX> then(String argument, ArgumentType<T> argumentType);
 
     /**
      * Builds the current node.
      * @return The built node.
      */
-    IPdkCommandNode build();
+    IPdkCommandNode<EXECUTOR, CTX> build();
 
     /**
      * Gets the permission of this node.

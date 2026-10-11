@@ -6,7 +6,7 @@
 
     <groupId>com.njdaeger</groupId>
     <artifactId>plugin-development-kit</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <repositories>
         <!-- This adds the Spigot Maven repository to the build -->
@@ -29,6 +29,13 @@
             <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.spongepowered</groupId>
+            <artifactId>configurate-yaml</artifactId>
+            <version>4.2.0</version>
+        </dependency>
+
     </dependencies>
 
     <distributionManagement>

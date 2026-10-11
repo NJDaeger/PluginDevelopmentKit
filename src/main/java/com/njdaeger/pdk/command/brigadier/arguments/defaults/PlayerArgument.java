@@ -91,7 +91,7 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
+        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
 
         var splitWords = builder.getRemaining().trim().split(" ");
         var currentWord = splitWords[splitWords.length - 1];

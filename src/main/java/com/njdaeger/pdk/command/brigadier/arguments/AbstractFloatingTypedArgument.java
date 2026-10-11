@@ -3,7 +3,6 @@ package com.njdaeger.pdk.command.brigadier.arguments;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +21,7 @@ public abstract class AbstractFloatingTypedArgument<TYPE, FLOATING_NUMERIC> exte
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(new CommandContextImpl((CommandContext<CommandSourceStack>) context));
+        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
         var current = builder.getRemaining();
         var hasDecimal = current.contains(".");
         var hasNegative = current.contains("-");
