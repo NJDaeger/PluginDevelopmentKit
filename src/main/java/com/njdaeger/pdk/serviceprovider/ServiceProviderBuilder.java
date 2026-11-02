@@ -144,16 +144,16 @@ public class ServiceProviderBuilder {
                 ordered.put(intf, pair.getSecond());
                 continue;
             }
-            var constructor = Arrays.stream(impl.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because it has no public constructors."));
+            var constructor = Arrays.stream(impl.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException(providerName + " Cannot instantiate " + impl.getSimpleName() + " because it has no public constructors."));
             var params = constructor.getParameters();
 
             if (params.length == 0 || canBeLoaded(params, merged)) {
                 ordered.put(intf, pair.getSecond());
             } else {
                 //if we were unable to be loaded with currently loaded classes, check if we can be loaded AT ALL. Checking the transient classes here can show if we are missing a scoped dependency.
-                if (!canBeLoaded(params, transients.keySet())) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing transient dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !transients.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+                if (!canBeLoaded(params, transients.keySet())) throw new RuntimeException(providerName + " Cannot instantiate transient " + impl.getSimpleName() + " because there are missing dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !transients.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
                 //if we have already tried to load this class and STILL failed, then we have a circular dependency.
-                if (recursiveIndicator == intf) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because it has a circular dependency.");
+                if (recursiveIndicator == intf) throw new RuntimeException(providerName + " Cannot instantiate transient " + impl.getSimpleName() + " because it has a circular dependency.");
                 toLoad.addFirst(intf);
                 recursiveIndicator = intf;
             }
@@ -186,7 +186,7 @@ public class ServiceProviderBuilder {
                 continue;
             }
 
-            var constructor = Arrays.stream(impl.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because it has no public constructors."));
+            var constructor = Arrays.stream(impl.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException(providerName + " Cannot instantiate " + impl.getSimpleName() + " because it has no public constructors."));
             var params = constructor.getParameters();
             var totalAvailable = Stream.concat(readyToLoad.stream().map(Pair::getFirst), goodToUse.stream()).collect(Collectors.toSet());
             //can be we loaded by what's available currently?
@@ -195,10 +195,10 @@ public class ServiceProviderBuilder {
             } else {
                 //can we be loaded by what's available currently + what is waiting to be loaded?
                 var allServices = Stream.concat(totalAvailable.stream(), waitingToLoad.stream()).collect(Collectors.toSet());
-                if (!canBeLoaded(params, allServices)) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing singleton dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !allServices.contains(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+                if (!canBeLoaded(params, allServices)) throw new RuntimeException(providerName + " Cannot instantiate singleton " + impl.getSimpleName() + " because there are missing dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !allServices.contains(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
 
                 //if we have already tried to load this class and STILL failed, then we have a circular dependency.
-                if (recursiveIndicator == intf) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + intf.getSimpleName() + " because it has a circular dependency.");
+                if (recursiveIndicator == intf) throw new RuntimeException(providerName + " Cannot instantiate singleton " + intf.getSimpleName() + " because it has a circular dependency.");
 
                 //we will try to load this class again after we have loaded the other singletons that are waiting to be loaded.
                 waitingToLoad.add(0, intf);
@@ -236,7 +236,7 @@ public class ServiceProviderBuilder {
      * @return A function that will instantiate the class.
      */
     private <S, I extends S> Function<IServiceProvider, S> generationFunction(Class<I> serviceImplementation) {
-        var constructor = Arrays.stream(serviceImplementation.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + serviceImplementation.getSimpleName() + " because it has no public constructors."));
+        var constructor = Arrays.stream(serviceImplementation.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException(providerName + " Cannot instantiate " + serviceImplementation.getSimpleName() + " because it has no public constructors."));
         return (s) -> {
             var params = constructor.getParameters();
             var args = new Object[params.length];
@@ -253,7 +253,7 @@ public class ServiceProviderBuilder {
                 return (S) constructor.newInstance(args);
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Failed to instantiate " + serviceImplementation.getSimpleName() + " because of an exception.", e);
+                throw new RuntimeException(providerName + " Failed to instantiate " + serviceImplementation.getSimpleName() + " because of an exception.", e);
             }
         };
     }

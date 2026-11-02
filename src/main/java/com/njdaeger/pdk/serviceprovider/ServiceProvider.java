@@ -6,10 +6,12 @@ import org.bukkit.plugin.Plugin;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ServiceProvider implements IServiceProvider {
 
@@ -30,6 +32,7 @@ public class ServiceProvider implements IServiceProvider {
 
     private void loadSingletons(Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> singletons) {
         var retryStack = new Stack<Pair<Class<?>, Function<IServiceProvider, ?>>>();
+        var failures = new LinkedHashMap<Class<?>, Exception>();
         singletons.forEach((pair) -> {
             var intf = pair.getFirst();
             var init = pair.getSecond();
@@ -39,14 +42,27 @@ public class ServiceProvider implements IServiceProvider {
                 this.singletons.put(intf, obj);
             } catch (Exception e) {
                 retryStack.addFirst(pair);
+                failures.put(intf, e);
             }
         });
         if (!retryStack.isEmpty()) {
             if (retryStack.size() == singletons.size()) {
-                throw new RuntimeException("[" + providerName + "ServiceProvider] Failed to initialize singletons because they all tried to grab a service that has not been loaded.");
+                //nothing loaded this pass, so retrying won't help. Report why each singleton failed instead of hiding the cause.
+                var reasons = failures.entrySet().stream()
+                        .map(e -> e.getKey().getSimpleName() + ": " + rootMessage(e.getValue()))
+                        .collect(Collectors.joining("; "));
+                var ex = new RuntimeException("[" + providerName + "ServiceProvider] Failed to initialize singletons. " + reasons, failures.values().iterator().next());
+                failures.values().stream().skip(1).forEach(ex::addSuppressed);
+                throw ex;
             }
             loadSingletons(retryStack);
         }
+    }
+
+    private static String rootMessage(Throwable t) {
+        var root = t;
+        while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+        return root.getClass().getSimpleName() + (root.getMessage() == null ? "" : " - " + root.getMessage());
     }
 
     @Override
