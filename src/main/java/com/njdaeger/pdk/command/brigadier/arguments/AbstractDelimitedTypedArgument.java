@@ -17,20 +17,41 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 public abstract class AbstractDelimitedTypedArgument<TYPE> extends AbstractStringTypedArgument<List<TYPE>> {
 
     private final char delimiter;
 
     public AbstractDelimitedTypedArgument() {
-        this.delimiter = '+';
+        this.delimiter = ',';
     }
 
     public AbstractDelimitedTypedArgument(char delimiter) {
-        if (!StringReader.isAllowedInUnquotedString(delimiter)) {
-            throw new IllegalArgumentException("Delimiter must be a character that is allowed in an unquoted string");
+        // the argument is read up to the next space, so a whitespace delimiter could never be typed
+        if (Character.isWhitespace(delimiter)) {
+            throw new IllegalArgumentException("Delimiter cannot be a whitespace character");
         }
         this.delimiter = delimiter;
+    }
+
+    // The native word() type stops at characters not allowed in unquoted strings (such as ','), so read up to the next
+    // space instead to allow any delimiter. The client still parses with word(), so it may highlight those delimiters
+    // as an error, but the server parses and suggests using this.
+    @Override
+    public <S> List<TYPE> parse(StringReader reader, S source) throws CommandSyntaxException {
+        return convertToCustom(((CommandSourceStack) source).getSender(), readUntilWhitespace(reader), reader);
+    }
+
+    @Override
+    public @NotNull List<TYPE> parse(@NotNull StringReader reader) throws CommandSyntaxException {
+        return convertToCustom(null, readUntilWhitespace(reader), reader);
+    }
+
+    private static String readUntilWhitespace(StringReader reader) {
+        var start = reader.getCursor();
+        while (reader.canRead() && reader.peek() != ' ') reader.skip();
+        return reader.getString().substring(start, reader.getCursor());
     }
 
     /**
@@ -119,7 +140,7 @@ public abstract class AbstractDelimitedTypedArgument<TYPE> extends AbstractStrin
 
     @Override
     public List<TYPE> convertToCustom(@Nullable CommandSender source, String nativeType, StringReader reader) throws CommandSyntaxException {
-        var splitData = nativeType.split(String.valueOf(delimiter));
+        var splitData = nativeType.split(Pattern.quote(String.valueOf(delimiter)));
         var result = new ArrayList<TYPE>();
         for (String str : splitData) {
             result.add(convertSingleToCustom(source, str, reader));
