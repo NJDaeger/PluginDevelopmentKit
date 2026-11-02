@@ -17,12 +17,14 @@ public class ServiceProvider implements IServiceProvider {
     private final Map<Class<?>, Object> singletons;
     private final Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions;
     private final String providerName;
+    private final IServiceProvider parent;
 
-    public ServiceProvider(Plugin plugin, String providerName, Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> singletons, Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions) {
+    public ServiceProvider(Plugin plugin, String providerName, Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> singletons, Map<Class<?>, Function<IServiceProvider, ?>> generatorFunctions, IServiceProvider parent) {
         this.singletons = new ConcurrentHashMap<>();
         this.generatorFunctions = new ConcurrentHashMap<>(generatorFunctions);
         this.plugin = plugin;
         this.providerName = providerName == null || providerName.isBlank() ? "" : providerName + " ";
+        this.parent = parent;
         loadSingletons(singletons);
     }
 
@@ -33,6 +35,7 @@ public class ServiceProvider implements IServiceProvider {
             var init = pair.getSecond();
             try {
                 var obj = init.apply(this);
+                if (obj == null) return; // we can have services that are registered but never actually register an implementation, in which case we hope the caller uses GetService if they want to avoid an error.
                 this.singletons.put(intf, obj);
             } catch (Exception e) {
                 retryStack.addFirst(pair);
@@ -54,6 +57,7 @@ public class ServiceProvider implements IServiceProvider {
         if (serviceClass == Plugin.class) return (S) plugin;
         if (singletons.containsKey(serviceClass)) return (S) singletons.get(serviceClass);
         if (generatorFunctions.containsKey(serviceClass)) return (S) generatorFunctions.get(serviceClass).apply(this);
+        if (parent != null) return parent.getService(serviceClass);
         return null;
     }
 

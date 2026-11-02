@@ -20,6 +20,7 @@ public class ServiceProviderBuilder {
 
     private final Map<Class<?>, Pair<Class<?>, Function<IServiceProvider, ?>>> transients = new HashMap<>();
     private final Map<Class<?>, Pair<Class<?>, Function<IServiceProvider, ?>>> singletons = new HashMap<>();
+    private IServiceProvider parent = null;
     private String providerName = "";
 
     /**
@@ -37,8 +38,7 @@ public class ServiceProviderBuilder {
      */
     public static ServiceProviderBuilder builder(IServiceProvider parent) {
         ServiceProviderBuilder builder = new ServiceProviderBuilder();
-        parent.getSingletons().forEach((key, obj) -> builder.addTransient((Class)key, (s) -> obj));
-        parent.getTransients().forEach((key, func) -> builder.addTransient((Class)key, func));
+        builder.parent = parent;
         return builder;
     }
 
@@ -55,8 +55,7 @@ public class ServiceProviderBuilder {
 
     public static ServiceProviderBuilder builder(String providerName, IServiceProvider parent) {
         ServiceProviderBuilder builder = new ServiceProviderBuilder();
-        parent.getSingletons().forEach((key, obj) -> builder.addTransient((Class)key, (s) -> obj));
-        parent.getTransients().forEach((key, func) -> builder.addTransient((Class)key, func));
+        builder.parent = parent;
         builder.providerName = providerName;
         return builder;
     }
@@ -118,7 +117,7 @@ public class ServiceProviderBuilder {
      * @return The built service provider.
      */
     public IServiceProvider build(Plugin plugin) {
-        return new ServiceProvider(plugin, providerName, orderSingletonsInLoadOrder(), orderTransientsInLoadOrder());
+        return new ServiceProvider(plugin, providerName, orderSingletonsInLoadOrder(), orderTransientsInLoadOrder(), parent);
     }
 
     /**
@@ -128,6 +127,10 @@ public class ServiceProviderBuilder {
     private Map<Class<?>, Function<IServiceProvider, ?>> orderTransientsInLoadOrder() {
         var merged = new HashSet<>(singletons.keySet());
         merged.addAll(transients.keySet());
+        if (parent != null) {
+            merged.addAll(parent.getSingletons().keySet());
+            merged.addAll(parent.getTransients().keySet());
+        }
         var ordered = new HashMap<Class<?>, Function<IServiceProvider, ?>>();
         var toLoad = new Stack<Class<?>>();
         toLoad.addAll(transients.keySet());
@@ -163,32 +166,52 @@ public class ServiceProviderBuilder {
      * @return A map of singletons in load order.
      */
     private Stack<Pair<Class<?>, Function<IServiceProvider, ?>>> orderSingletonsInLoadOrder() {
-        var ordered = new Stack<Pair<Class<?>, Function<IServiceProvider, ?>>>();
-        var toLoad = new Stack<Class<?>>();
-        toLoad.addAll(singletons.keySet());
+        var readyToLoad = new Stack<Pair<Class<?>, Function<IServiceProvider, ?>>>();
+        var waitingToLoad = new Stack<Class<?>>();
+        waitingToLoad.addAll(singletons.keySet());
+
+        var goodToUse = new HashSet<>(transients.keySet());
+        if (parent != null) {
+            goodToUse.addAll(parent.getSingletons().keySet());
+            goodToUse.addAll(parent.getTransients().keySet());
+        }
 
         Class<?> recursiveIndicator = null;
-        while (!toLoad.isEmpty()) {
-            var intf = toLoad.pop();
+        while (!waitingToLoad.isEmpty()) {
+            var intf = waitingToLoad.pop();
             var pair = singletons.get(intf);
             var impl = pair.getFirst();
             if (impl == null) {
-                ordered.push(Pair.of(intf, pair.getSecond()));
+                readyToLoad.push(Pair.of(intf, pair.getSecond()));
                 continue;
             }
 
             var constructor = Arrays.stream(impl.getConstructors()).max(Comparator.comparingInt(Constructor::getParameterCount)).orElseThrow(() -> new RuntimeException("Cannot instantiate " + impl.getSimpleName() + " because it has no public constructors."));
             var params = constructor.getParameters();
-            if (canBeLoaded(params, ordered.stream().map(Pair::getFirst).collect(Collectors.toSet()))) {
-                ordered.push(Pair.of(intf, pair.getSecond()));
+            var totalAvailable = Stream.concat(readyToLoad.stream().map(Pair::getFirst), goodToUse.stream()).collect(Collectors.toSet());
+            //can be we loaded by what's available currently?
+            if (canBeLoaded(params, totalAvailable)) {
+                readyToLoad.push(Pair.of(intf, pair.getSecond()));
             } else {
-                if (!canBeLoaded(params, singletons.keySet())) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing singleton dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !singletons.containsKey(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+                //can we be loaded by what's available currently + what is waiting to be loaded?
+                var allServices = Stream.concat(totalAvailable.stream(), waitingToLoad.stream()).collect(Collectors.toSet());
+                if (!canBeLoaded(params, allServices)) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + impl.getSimpleName() + " because there are missing singleton dependencies. Unable to find " + Stream.of(params).map(Parameter::getType).filter(type -> !allServices.contains(type)).map(Class::getSimpleName).reduce((s1, s2) -> s1 + ", " + s2).orElse("no dependencies") + ".");
+
+                //if we have already tried to load this class and STILL failed, then we have a circular dependency.
                 if (recursiveIndicator == intf) throw new RuntimeException("[" + providerName + "ServiceProviderBuilder] Cannot instantiate " + intf.getSimpleName() + " because it has a circular dependency.");
-                toLoad.add(0, intf);
+
+                //we will try to load this class again after we have loaded the other singletons that are waiting to be loaded.
+                waitingToLoad.add(0, intf);
+
+                //we will set the recursive indicator to this class so that if we try to load it again and fail, we know we have a circular dependency.
                 recursiveIndicator = intf;
             }
         }
-        return ordered;
+        return readyToLoad;
+    }
+
+    private static boolean isNullable(Parameter param) {
+        return Arrays.stream(param.getAnnotations()).anyMatch(a -> a.annotationType().getSimpleName().equalsIgnoreCase("nullable"));
     }
 
     /**
@@ -197,11 +220,12 @@ public class ServiceProviderBuilder {
      * @param loadedBefore The classes that will have already been loaded.
      * @return True if all the parameters can be loaded from the given set of classes.
      */
-    private static boolean canBeLoaded(Parameter[] params, Set<Class<?>> loadedBefore) {
+    private boolean canBeLoaded(Parameter[] params, Set<Class<?>> loadedBefore) {
         var temp = new HashSet<>(loadedBefore);
         temp.add(IServiceProvider.class);//service provider can always be provided.
         temp.add(Plugin.class);//plugin can always be provided.
-        return Stream.of(params).map(Parameter::getType).allMatch(temp::contains);
+        return Stream.of(params).allMatch(param -> temp.contains(param.getType())
+                || (isNullable(param) && (!singletons.containsKey(param.getType()) && !transients.containsKey(param.getType()) && (parent == null || parent.getService(param.getType()) == null))));
     }
 
     /**
