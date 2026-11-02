@@ -150,7 +150,7 @@ public class YmlConfig implements IConfig {
             if (line.length() + depth + 2 > 120) {
                 int lastCut = 0;
                 while (lastCut < line.length()) {
-                    comments.add(createTab(depth) + "# " + line.substring(lastCut, (lastCut + 118 - depth) > line.length() ? line.length() : (lastCut + 118 - depth)));
+                    comments.add(createTab(depth) + "# " + line.substring(lastCut, Math.min((lastCut + 118 - depth), line.length())));
                     lastCut += (118 - depth);
                 }
             } else comments.add(createTab(depth) + "# " + line);

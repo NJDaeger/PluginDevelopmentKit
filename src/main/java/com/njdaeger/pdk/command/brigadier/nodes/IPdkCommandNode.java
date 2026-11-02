@@ -1,19 +1,20 @@
 package com.njdaeger.pdk.command.brigadier.nodes;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.ICommandExecutor;
 import com.njdaeger.pdk.command.brigadier.PermissionMode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 
 import java.util.List;
 
-public interface IPdkCommandNode {
+public interface IPdkCommandNode<EXECUTOR extends ICommandExecutor<CTX>, CTX extends ICommandContext> {
 
     /**
      * Gets the executor for this command node.
      * @return The executor for this command node.
      */
-    ICommandExecutor getExecutor();
+    EXECUTOR getExecutor();
 
     /**
      * Checks if this command node can be executed.
@@ -27,7 +28,7 @@ public interface IPdkCommandNode {
      * Gets the arguments for this command node.
      * @return The arguments for this command node.
      */
-    List<IPdkCommandNode> getArguments();
+    List<IPdkCommandNode<EXECUTOR, CTX>> getArguments();
 
     /**
      * Gets the permission for this command node.

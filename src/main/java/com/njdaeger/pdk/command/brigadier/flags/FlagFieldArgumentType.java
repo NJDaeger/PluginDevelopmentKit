@@ -9,6 +9,7 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
+import com.njdaeger.pdk.command.brigadier.arguments.IPdkArgumentType;
 import com.njdaeger.pdk.utils.Pair;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
@@ -85,10 +86,13 @@ public class FlagFieldArgumentType extends BasePdkArgumentType<FlagMap, String> 
                         reader.setCursor(reader.getCursor() - flagNameLength - 1);
                         throw MISSING_ARGUMENT.createWithContext(reader, flag.getName());
                     }
-                    var flagValue = flag.getType().parse(reader);
-                    map.setFlag(flag.getName(), flagValue);
+                    var flagValue = flag.getType().parse(reader, sender);
+                    var nativeData = flag.getType() instanceof IPdkArgumentType pdkArg
+                            ? pdkArg.convertToNative(flagValue)
+                            : flagValue;
+                    map.setFlag(flag.getName(), flagValue, String.valueOf(nativeData));
                 }
-                else map.setFlag(flag.getName(), true);
+                else map.setFlag(flag.getName(), true, "");
                 reader.skipWhitespace();
             }
         }

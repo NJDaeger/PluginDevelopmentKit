@@ -5,12 +5,13 @@ import com.mojang.brigadier.context.ParsedArgument;
 import com.njdaeger.pdk.command.brigadier.flags.FlagMap;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -20,15 +21,17 @@ public class CommandContextImpl implements ICommandContext {
     private final Map<String, Object> argumentMapping;
     private final Map<Integer, String> argumentIndexMapping;
     private final FlagMap flagMap;
+    private final Plugin plugin;
 
-    public CommandContextImpl(CommandContext<CommandSourceStack> baseContext) {
+    public CommandContextImpl(Plugin plugin, CommandContext<CommandSourceStack> baseContext) {
         this.baseContext = baseContext;
-        this.argumentIndexMapping = new HashMap<>();
+        this.plugin = plugin;
+        this.argumentIndexMapping = new ConcurrentHashMap<>();
         try {
             var decfield = baseContext.getClass().getDeclaredField("arguments");
             decfield.setAccessible(true);
             var args = (Map<String, ParsedArgument<CommandSourceStack, ?>>) decfield.get(baseContext);
-            argumentMapping = args.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getResult()));
+            argumentMapping = args.entrySet().stream().collect(Collectors.toConcurrentMap(Map.Entry::getKey, e -> e.getValue().getResult()));
 
             var input = baseContext.getInput();
             //we want to trim out all the parser arguments from the input string and replace them with
@@ -68,6 +71,11 @@ public class CommandContextImpl implements ICommandContext {
     }
 
     @Override
+    public Plugin getPlugin() {
+        return plugin;
+    }
+
+    @Override
     public boolean hasFlag(String flag) {
         return flagMap.hasFlag(flag);
     }
@@ -80,6 +88,11 @@ public class CommandContextImpl implements ICommandContext {
     @Override
     public <T> @Nullable T getFlag(String flag, T defaultValue) {
         return flagMap.getFlag(flag, defaultValue);
+    }
+
+    @Override
+    public @Nullable String getRawFlag(String flag) {
+        return flagMap.getRawFlagValue(flag);
     }
 
     @Override
