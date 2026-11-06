@@ -53,8 +53,17 @@ public abstract class BasePdkArgumentType<CUSTOM, NATIVE> implements IPdkArgumen
 
     @Override
     public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
+        return listSuggestionsAsync(generateContext((CommandContext<CommandSourceStack>) context))
+                .thenCompose(suggestions -> buildSuggestions(suggestions, builder));
+    }
 
+    /**
+     * Turns the suggestions from {@link #listSuggestionsAsync(ICommandContext)} into the suggestions sent to the client.
+     * @param suggestions The suggestions and their tooltip messages.
+     * @param builder The suggestions builder for this argument.
+     * @return The built suggestions.
+     */
+    protected CompletableFuture<Suggestions> buildSuggestions(Map<CUSTOM, Message> suggestions, SuggestionsBuilder builder) {
         var splitWords = builder.getRemaining().split(" ");
         var currentWord = splitWords.length == 0 ? builder.getRemaining() : splitWords[splitWords.length - 1];
 

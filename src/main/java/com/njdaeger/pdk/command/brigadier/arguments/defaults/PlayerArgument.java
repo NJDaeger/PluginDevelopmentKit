@@ -4,15 +4,12 @@ import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.njdaeger.pdk.command.brigadier.CommandContextImpl;
 import com.njdaeger.pdk.command.brigadier.ICommandContext;
 import com.njdaeger.pdk.command.brigadier.arguments.BasePdkArgumentType;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -90,9 +87,7 @@ public class PlayerArgument extends BasePdkArgumentType<Player, String> {
     }
 
     @Override
-    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
-
+    protected CompletableFuture<Suggestions> buildSuggestions(Map<Player, Message> suggestions, SuggestionsBuilder builder) {
         var splitWords = builder.getRemaining().trim().split(" ");
         var currentWord = splitWords[splitWords.length - 1];
 

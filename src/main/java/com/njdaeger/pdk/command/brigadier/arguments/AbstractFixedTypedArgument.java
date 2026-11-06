@@ -1,11 +1,10 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
-import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.LongStream;
 
@@ -20,8 +19,7 @@ public abstract class AbstractFixedTypedArgument<TYPE, FIXED_NUMERIC> extends Ba
     }
 
     @Override
-    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
+    protected CompletableFuture<Suggestions> buildSuggestions(Map<TYPE, Message> suggestions, SuggestionsBuilder builder) {
         var current = builder.getRemaining();
         var completingAt = builder.getStart() + ((current.contains("-") && min < 0) ? current.lastIndexOf("-") + 1 : 0);
         var newBuilder = builder.createOffset(completingAt);

@@ -1,11 +1,10 @@
 package com.njdaeger.pdk.command.brigadier.arguments;
 
-import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
@@ -20,8 +19,7 @@ public abstract class AbstractFloatingTypedArgument<TYPE, FLOATING_NUMERIC> exte
     }
 
     @Override
-    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var suggestions = listSuggestions(generateContext((CommandContext<CommandSourceStack>) context));
+    protected CompletableFuture<Suggestions> buildSuggestions(Map<TYPE, Message> suggestions, SuggestionsBuilder builder) {
         var current = builder.getRemaining();
         var hasDecimal = current.contains(".");
         var hasNegative = current.contains("-");

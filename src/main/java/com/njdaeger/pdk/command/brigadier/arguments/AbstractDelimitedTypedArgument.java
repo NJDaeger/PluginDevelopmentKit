@@ -83,6 +83,35 @@ public abstract class AbstractDelimitedTypedArgument<TYPE> extends AbstractStrin
         return Map.of();
     }
 
+    /**
+     * Returns a future of the basic suggestions for a single segment of the delimited argument. All tooltips will be
+     * the default tooltip message. Override this instead of {@link #listBasicDelimitedSuggestions(ICommandContext)}
+     * when the suggestions come from something asynchronous, such as a web request.
+     * <p>
+     * This is only used when {@link #listDelimitedSuggestions(ICommandContext)} returns no suggestions.
+     * @param commandContext The command context.
+     * @return A future of a list of basic suggestions.
+     */
+    public CompletableFuture<List<TYPE>> listBasicDelimitedSuggestionsAsync(ICommandContext commandContext) {
+        return CompletableFuture.completedFuture(List.of());
+    }
+
+    /**
+     * Returns a future of the suggestions for a single segment of the delimited argument. This is what the command
+     * completion calls. By default it uses {@link #listDelimitedSuggestions(ICommandContext)}, falling back to
+     * {@link #listBasicDelimitedSuggestionsAsync(ICommandContext)} when that has no suggestions. Override this instead
+     * when the suggestions and their tooltips come from something asynchronous, such as a web request.
+     * @param commandContext The command context.
+     * @return A future of a map of suggestions and their tooltip messages.
+     */
+    public CompletableFuture<Map<TYPE, Message>> listDelimitedSuggestionsAsync(ICommandContext commandContext) {
+        var suggestions = listDelimitedSuggestions(commandContext);
+        if (!suggestions.isEmpty()) return CompletableFuture.completedFuture(suggestions);
+        var defaultMessage = getDefaultTooltipMessage();
+        return listBasicDelimitedSuggestionsAsync(commandContext)
+                .thenApply(basic -> basic.stream().collect(java.util.stream.Collectors.toMap(suggestion -> suggestion, unused -> defaultMessage)));
+    }
+
     @Override
     public final List<List<TYPE>> listBasicSuggestions(ICommandContext commandContext) {
         throw new UnsupportedOperationException("listBasicSuggestions is not supported for AbstractDelimitedTypedArgument. Use listBasicDelimitedSuggestions instead.");
@@ -94,10 +123,28 @@ public abstract class AbstractDelimitedTypedArgument<TYPE> extends AbstractStrin
     }
 
     @Override
-    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-        var ctx = generateContext((CommandContext<CommandSourceStack>) context);
-        var typedSuggestions = listDelimitedSuggestions(ctx);
+    public final CompletableFuture<List<List<TYPE>>> listBasicSuggestionsAsync(ICommandContext commandContext) {
+        throw new UnsupportedOperationException("listBasicSuggestionsAsync is not supported for AbstractDelimitedTypedArgument. Use listBasicDelimitedSuggestionsAsync instead.");
+    }
 
+    @Override
+    public final CompletableFuture<Map<List<TYPE>, Message>> listSuggestionsAsync(ICommandContext commandContext) {
+        throw new UnsupportedOperationException("listSuggestionsAsync is not supported for AbstractDelimitedTypedArgument. Use listDelimitedSuggestionsAsync instead.");
+    }
+
+    @Override
+    public @NotNull <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
+        return listDelimitedSuggestionsAsync(generateContext((CommandContext<CommandSourceStack>) context))
+                .thenCompose(typedSuggestions -> buildDelimitedSuggestions(typedSuggestions, builder));
+    }
+
+    /**
+     * Turns the suggestions from {@link #listDelimitedSuggestionsAsync(ICommandContext)} into the suggestions sent to the client.
+     * @param typedSuggestions The segment suggestions and their tooltip messages.
+     * @param builder The suggestions builder for this argument.
+     * @return The built suggestions.
+     */
+    protected CompletableFuture<Suggestions> buildDelimitedSuggestions(Map<TYPE, Message> typedSuggestions, SuggestionsBuilder builder) {
         if (typedSuggestions.isEmpty()) return builder.buildFuture();
 
         var suggestions = typedSuggestions.entrySet().stream()
